@@ -1,0 +1,39 @@
+{
+	"schemaVersion": 1,
+	"id": "realistic-water",
+	"version": "${version}",
+	"name": "Realistic Fluids",
+	"description": "Realistic Fluids - modified version of Realistic Water by Skaffy (https://github.com/sskaffy/Realistic-Water). This is a modified version, not the original mod.",
+	"authors": [
+		"Skaffy"
+	],
+	"contact": {
+	},
+	"license": "Custom License",
+	"icon": "assets/realistic-water/icon.png",
+	"environment": "*",
+	"entrypoints": {
+		"main": [
+			"me.skaffy.RealisticWater"
+		],
+		"client": [
+			"me.skaffy.client.RealisticWaterClient"
+		],
+		"sodium:config_api_user": [
+			"me.skaffy.client.compat.SodiumOptions"
+		]
+	},
+	"mixins": [
+		"realistic-water.mixins.json",
+		{
+			"config": "realistic-water.client.mixins.json",
+			"environment": "client"
+		}
+	],
+	"depends": {
+		"fabricloader": ">=0.19.5",
+		"minecraft": "~26.3",
+		"java": ">=25",
+		"fabric-api": "*"
+	}
+}
