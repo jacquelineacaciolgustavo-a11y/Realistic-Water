@@ -4,6 +4,10 @@ import me.skaffy.block.RealisticLavaBlock;
 import me.skaffy.block.RealisticLeavesBlock;
 import me.skaffy.block.RealisticSandBlock;
 import me.skaffy.block.RealisticWaterBlock;
+import me.skaffy.block.SourceBlock;
+import me.skaffy.fluid.FiniteBucketItem;
+import me.skaffy.net.LavaSyncPayload;
+import me.skaffy.net.WaterSyncPayload;
 import me.skaffy.block.WaveMakerBlock;
 import me.skaffy.fluid.RealisticLavaFluid;
 import me.skaffy.fluid.RealisticSlimeFluid;
@@ -22,6 +26,10 @@ import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.flag.FeatureFlags;
 import net.minecraft.world.inventory.MenuType;
 import net.fabricmc.fabric.api.creativetab.v1.CreativeModeTabEvents;
+import net.fabricmc.fabric.api.creativetab.v1.FabricCreativeModeTab;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.CreativeModeTab;
+import net.minecraft.world.item.ItemStack;
 import net.fabricmc.fabric.api.particle.v1.FabricParticleTypes;
 import net.minecraft.core.particles.SimpleParticleType;
 import net.minecraft.core.BlockPos;
@@ -72,8 +80,8 @@ public final class ModContent {
 	));
 
 	public static final ResourceKey<Item> REALISTIC_WATER_BUCKET_KEY = ResourceKey.create(Registries.ITEM, RealisticWater.id("realistic_water_bucket"));
-	public static final Item REALISTIC_WATER_BUCKET = Registry.register(BuiltInRegistries.ITEM, REALISTIC_WATER_BUCKET_KEY, new BucketItem(
-		REALISTIC_WATER, new Item.Properties().craftRemainder(Items.BUCKET).stacksTo(1).setId(REALISTIC_WATER_BUCKET_KEY)));
+	public static final Item REALISTIC_WATER_BUCKET = Registry.register(BuiltInRegistries.ITEM, REALISTIC_WATER_BUCKET_KEY, new FiniteBucketItem(
+		REALISTIC_WATER, WaterSyncPayload::stateFor, new Item.Properties().craftRemainder(Items.BUCKET).stacksTo(1).setId(REALISTIC_WATER_BUCKET_KEY)));
 
 	public static final ResourceKey<Item> SMALL_REALISTIC_WATER_BUCKET_KEY = ResourceKey.create(Registries.ITEM, RealisticWater.id("small_realistic_water_bucket"));
 	public static final Item SMALL_REALISTIC_WATER_BUCKET = Registry.register(BuiltInRegistries.ITEM, SMALL_REALISTIC_WATER_BUCKET_KEY, new SmallWaterBucketItem(
@@ -101,8 +109,8 @@ public final class ModContent {
 	));
 
 	public static final ResourceKey<Item> REALISTIC_LAVA_BUCKET_KEY = ResourceKey.create(Registries.ITEM, RealisticWater.id("realistic_lava_bucket"));
-	public static final Item REALISTIC_LAVA_BUCKET = Registry.register(BuiltInRegistries.ITEM, REALISTIC_LAVA_BUCKET_KEY, new BucketItem(
-		REALISTIC_LAVA, new Item.Properties().craftRemainder(Items.BUCKET).stacksTo(1).setId(REALISTIC_LAVA_BUCKET_KEY)));
+	public static final Item REALISTIC_LAVA_BUCKET = Registry.register(BuiltInRegistries.ITEM, REALISTIC_LAVA_BUCKET_KEY, new FiniteBucketItem(
+		REALISTIC_LAVA, LavaSyncPayload::stateFor, new Item.Properties().craftRemainder(Items.BUCKET).stacksTo(1).setId(REALISTIC_LAVA_BUCKET_KEY)));
 
 	public static final FlowingFluid FLOWING_REALISTIC_SLIME = Registry.register(
 		BuiltInRegistries.FLUID, RealisticWater.id("flowing_realistic_slime"), new RealisticSlimeFluid.Flowing());
@@ -180,6 +188,46 @@ public final class ModContent {
 
 	public static final ResourceKey<Item> WAVE_MAKER_ITEM_KEY = ResourceKey.create(Registries.ITEM, RealisticWater.id("wave_maker"));
 	public static final Item WAVE_MAKER_ITEM = registerBlockItem(WAVE_MAKER_ITEM_KEY, WAVE_MAKER);
+
+	public static final ResourceKey<Block> SOURCE_WATER_KEY = ResourceKey.create(Registries.BLOCK, RealisticWater.id("source_water"));
+	public static final Block SOURCE_WATER = Registry.register(BuiltInRegistries.BLOCK, SOURCE_WATER_KEY, new SourceBlock(0,
+		BlockBehaviour.Properties.of()
+			.mapColor(MapColor.WATER)
+			.instrument(NoteBlockInstrument.BASEDRUM)
+			.strength(1.5F, 6.0F)
+			.sound(SoundType.METAL)
+			.setId(SOURCE_WATER_KEY)
+	));
+
+	public static final ResourceKey<Item> SOURCE_WATER_ITEM_KEY = ResourceKey.create(Registries.ITEM, RealisticWater.id("source_water"));
+	public static final Item SOURCE_WATER_ITEM = registerBlockItem(SOURCE_WATER_ITEM_KEY, SOURCE_WATER);
+
+	public static final ResourceKey<Block> SOURCE_LAVA_KEY = ResourceKey.create(Registries.BLOCK, RealisticWater.id("source_lava"));
+	public static final Block SOURCE_LAVA = Registry.register(BuiltInRegistries.BLOCK, SOURCE_LAVA_KEY, new SourceBlock(1,
+		BlockBehaviour.Properties.of()
+			.mapColor(MapColor.FIRE)
+			.instrument(NoteBlockInstrument.BASEDRUM)
+			.strength(1.5F, 6.0F)
+			.sound(SoundType.METAL)
+			.lightLevel(state -> 7)
+			.setId(SOURCE_LAVA_KEY)
+	));
+
+	public static final ResourceKey<Item> SOURCE_LAVA_ITEM_KEY = ResourceKey.create(Registries.ITEM, RealisticWater.id("source_lava"));
+	public static final Item SOURCE_LAVA_ITEM = registerBlockItem(SOURCE_LAVA_ITEM_KEY, SOURCE_LAVA);
+
+	public static final ResourceKey<Block> SOURCE_SLIME_KEY = ResourceKey.create(Registries.BLOCK, RealisticWater.id("source_slime"));
+	public static final Block SOURCE_SLIME = Registry.register(BuiltInRegistries.BLOCK, SOURCE_SLIME_KEY, new SourceBlock(2,
+		BlockBehaviour.Properties.of()
+			.mapColor(MapColor.GRASS)
+			.instrument(NoteBlockInstrument.BASEDRUM)
+			.strength(1.5F, 6.0F)
+			.sound(SoundType.METAL)
+			.setId(SOURCE_SLIME_KEY)
+	));
+
+	public static final ResourceKey<Item> SOURCE_SLIME_ITEM_KEY = ResourceKey.create(Registries.ITEM, RealisticWater.id("source_slime"));
+	public static final Item SOURCE_SLIME_ITEM = registerBlockItem(SOURCE_SLIME_ITEM_KEY, SOURCE_SLIME);
 	public static final SoundEvent BOILING = Registry.register(BuiltInRegistries.SOUND_EVENT, RealisticWater.id("block.realistic_water.boil"),
 		SoundEvent.createVariableRangeEvent(RealisticWater.id("block.realistic_water.boil")));
 	public static final SoundEvent WAVE_MAKER_RUN = Registry.register(BuiltInRegistries.SOUND_EVENT, RealisticWater.id("block.wave_maker.run"),
@@ -231,6 +279,26 @@ public final class ModContent {
 			.build(REALISTIC_BOAT_KEY));
 
 	public static final SimpleParticleType STEAM = Registry.register(BuiltInRegistries.PARTICLE_TYPE, RealisticWater.id("steam"), FabricParticleTypes.simple(true));
+
+	public static final ResourceKey<CreativeModeTab> TAB_KEY = ResourceKey.create(Registries.CREATIVE_MODE_TAB, RealisticWater.id("realistic_fluids"));
+	public static final CreativeModeTab TAB = Registry.register(BuiltInRegistries.CREATIVE_MODE_TAB, TAB_KEY, FabricCreativeModeTab.builder()
+		.title(Component.translatable("itemGroup.realistic-water.realistic_fluids"))
+		.icon(() -> new ItemStack(SOURCE_WATER_ITEM))
+		.displayItems((params, output) -> {
+			output.accept(REALISTIC_WATER_BUCKET);
+			output.accept(SMALL_REALISTIC_WATER_BUCKET);
+			output.accept(REALISTIC_LAVA_BUCKET);
+			output.accept(REALISTIC_SLIME_BUCKET);
+			output.accept(SOURCE_WATER_ITEM);
+			output.accept(SOURCE_LAVA_ITEM);
+			output.accept(SOURCE_SLIME_ITEM);
+			output.accept(WAVE_MAKER_ITEM);
+			output.accept(CONVERTER);
+			output.accept(REALISTIC_BOAT_ITEM);
+			output.accept(REALISTIC_SAND_ITEM);
+			output.accept(REALISTIC_LEAVES_ITEM);
+		})
+		.build());
 
 	private ModContent() {
 	}

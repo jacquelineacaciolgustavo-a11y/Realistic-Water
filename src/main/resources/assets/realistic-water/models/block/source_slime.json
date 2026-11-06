@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/cube_column",
+  "textures": {
+    "end": "realistic-water:block/source_slime_top",
+    "side": "realistic-water:block/source_slime_side"
+  }
+}

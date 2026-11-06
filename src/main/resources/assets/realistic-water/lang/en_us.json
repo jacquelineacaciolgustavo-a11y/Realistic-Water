@@ -30,5 +30,22 @@
   "death.attack.realistic-water.boilingWater.player": "%1$s was boiled alive while fighting %2$s",
   "death.attack.realistic-water.cooked": "%1$s was cooked in %2$s°C water",
   "death.attack.realistic-water.cooked.player": "%1$s was cooked in %2$s°C water while fighting %3$s",
-  "subtitles.realistic-water.block.realistic_water.boil": "Water boils"
+  "subtitles.realistic-water.block.realistic_water.boil": "Water boils",
+  "block.realistic-water.source_water": "Water Source",
+  "block.realistic-water.source_lava": "Lava Source",
+  "block.realistic-water.source_slime": "Slime Source",
+  "block.realistic-water.source.title": "Source flow",
+  "block.realistic-water.source.flow_label": "Flow: %s / 1000",
+  "block.realistic-water.source.flood": "Flood mode",
+  "block.realistic-water.source.all": "ALL",
+  "block.realistic-water.source.save": "Save",
+  "block.realistic-water.source.open": "%s output open",
+  "block.realistic-water.source.closed": "%s output closed",
+  "block.realistic-water.source.face.up": "Top",
+  "block.realistic-water.source.face.down": "Bottom",
+  "block.realistic-water.source.face.north": "North",
+  "block.realistic-water.source.face.south": "South",
+  "block.realistic-water.source.face.east": "East",
+  "block.realistic-water.source.face.west": "West",
+  "itemGroup.realistic-water.realistic_fluids": "Realistic Fluids"
 }

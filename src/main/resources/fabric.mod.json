@@ -2,8 +2,8 @@
 	"schemaVersion": 1,
 	"id": "realistic-water",
 	"version": "${version}",
-	"name": "Realistic Water",
-	"description": "Ultra realistic stuff from Blender Minecraft renders!",
+	"name": "Realistic Fluids",
+	"description": "Realistic Fluids - modified version of Realistic Water by Skaffy (https://github.com/sskaffy/Realistic-Water). This is a modified version, not the original mod.",
 	"authors": [
 		"Skaffy"
 	],

@@ -12,6 +12,7 @@ import me.skaffy.net.GridBlockEntityPayload;
 import me.skaffy.net.GridBlockEventPayload;
 import me.skaffy.net.GridLevelEventPayload;
 import me.skaffy.net.GridSoundPayload;
+import me.skaffy.net.SourceConfigPayload;
 import me.skaffy.net.UseRealisticPayload;
 import me.skaffy.realistic.GridSpace;
 import me.skaffy.realistic.RealisticPhysics;
@@ -67,6 +68,7 @@ public class RealisticWater implements ModInitializer {
 		PayloadTypeRegistry.serverboundPlay().register(BackgroundSyncPayload.TYPE, BackgroundSyncPayload.CODEC);
 		PayloadTypeRegistry.serverboundPlay().register(BreakRealisticPayload.TYPE, BreakRealisticPayload.CODEC);
 		PayloadTypeRegistry.serverboundPlay().register(UseRealisticPayload.TYPE, UseRealisticPayload.CODEC);
+		PayloadTypeRegistry.serverboundPlay().register(SourceConfigPayload.TYPE, SourceConfigPayload.CODEC);
 		PayloadTypeRegistry.serverboundPlay().register(FlowPayload.TYPE, FlowPayload.CODEC);
 		PayloadTypeRegistry.serverboundPlay().register(BodyStatePayload.TYPE, BodyStatePayload.CODEC);
 		PayloadTypeRegistry.serverboundPlay().register(BodyPushPayload.TYPE, BodyPushPayload.CODEC);
@@ -117,6 +119,7 @@ public class RealisticWater implements ModInitializer {
 		});
 		ServerPlayNetworking.registerGlobalReceiver(BreakRealisticPayload.TYPE, (payload, context) -> context.server().execute(() -> payload.apply(context.player())));
 		ServerPlayNetworking.registerGlobalReceiver(UseRealisticPayload.TYPE, (payload, context) -> context.server().execute(() -> payload.apply(context.player())));
+		ServerPlayNetworking.registerGlobalReceiver(SourceConfigPayload.TYPE, (payload, context) -> context.server().execute(() -> payload.apply(context.player())));
 		ServerPlayNetworking.registerGlobalReceiver(WaterSyncPayload.TYPE, (payload, context) -> {
 			if (isAuthority(context.server(), context.player())) {
 				context.server().execute(() -> payload.apply(context.player()));

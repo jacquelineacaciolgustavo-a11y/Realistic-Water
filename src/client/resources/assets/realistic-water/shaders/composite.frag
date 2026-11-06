@@ -293,15 +293,19 @@ vec3 shadeSlime(vec2 uv, vec3 n, float fd, vec2 bs) {
     vec3 P = viewPosAt(uv, fd);
     vec3 V = normalize(-P);
     n = dot(n, V) < 0.0 ? -n : n;
-    vec3 nWorld = normalize(mat3(G.invView) * n);
-    vec3 world = G.misc.yzw + (G.invView * vec4(P, 1.0)).xyz - nWorld * 0.01;
-    vec3 albedo = slimeAlbedo(world, nWorld, pixelFootprint(fd));
-    vec3 n2 = nWorld * nWorld;
-    float face = n2.x * 0.6 + n2.z * 0.8 + n2.y * (nWorld.y > 0.0 ? 1.0 : 0.5);
-    vec3 lit = min(albedo * face * vanillaLight(bs) * G.matD.y, vec3(1.0));
+    float footprint = pixelFootprint(fd);
+    vec3 wrinkled = rippleNormal(n, P, footprint);
+    n = normalize(mix(n, wrinkled, smoothstep(0.0, 0.2, dot(wrinkled, V))));
     float path = max(thicknessAt(uv), 0.0) * G.waterA.y;
-    float opacity = mix(G.matD.w, 1.0, 1.0 - exp(-path * 3.0));
-    vec3 behind = behindAt(uv) * mix(vec3(1.0), albedo * 1.3, 0.75);
+    vec3 green = vec3(0.35, 1.0, 0.25);
+    vec3 glow = green * (0.6 + vanillaLight(bs));
+    float coreAmount = 1.0 - exp(-2.5 * path * 0.45);
+    vec3 core = glow * (0.35 + 0.65 * coreAmount);
+    float fresnel = pow(1.0 - clamp(dot(n, V), 0.0, 1.0), 2.0);
+    vec3 rim = glow * fresnel * 0.85;
+    vec3 lit = core + rim + sunSpecular(n, V, footprint, 0.0) * vec3(0.7, 1.0, 0.6);
+    float opacity = mix(G.matD.w, 0.75, 1.0 - exp(-path * 2.0));
+    vec3 behind = behindAt(uv) * mix(vec3(1.0), green * 1.1, 0.5);
     return mix(behind, lit, opacity);
 }
 

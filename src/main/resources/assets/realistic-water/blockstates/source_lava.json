@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "": {
+      "model": "realistic-water:block/source_lava"
+    }
+  }
+}

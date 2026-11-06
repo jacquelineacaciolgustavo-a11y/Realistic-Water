@@ -15,14 +15,14 @@ import java.util.Map;
 import java.util.TreeMap;
 
 public final class WaterSettings {
-	public static int resolution = 6;
+	public static int resolution = 4;
 	public static int boxMargin = 6;
 
 	public static float cfl = 2.0F;
 	public static float maxDt = 1.0F / 40.0F;
-	public static int maxStepsPerFrame = 4;
+	public static int maxStepsPerFrame = 2;
 	public static int renderMaxStepsPerFrame = 64;
-	public static int cgIterations = 5;
+	public static int cgIterations = 3;
 	public static int mgCoarseSweeps = 12;
 	public static int solverBottomCells = 8192;
 	public static int solverSmallCells = 24000;
@@ -50,8 +50,8 @@ public final class WaterSettings {
 	public static float wwSprayDrag = 0.4F;
 	public static float wwSprayThreshold = 3.0F;
 	public static float wwBubbleThreshold = 6.0F;
-	public static int wwMaxPerParticle = 4;
-	public static int wwCellLimit = 12;
+	public static int wwMaxPerParticle = 2;
+	public static int wwCellLimit = 6;
 
 	public static float filmFriction = 40.0F;
 	public static float filmDepth = 0.08F;
@@ -62,7 +62,7 @@ public final class WaterSettings {
 	public static float strandedTime = 1.5F;
 	public static int strandedNeighbors = 12;
 
-	public static int surfaceSubdivision = 2;
+	public static int surfaceSubdivision = 1;
 	public static float surfaceKernel = 3.0F;
 	public static float surfaceRadius = 0.9F;
 	public static float surfaceIso = 0.5F;
@@ -160,7 +160,7 @@ public final class WaterSettings {
 	public static float waveMakerRate = 4.0F;
 	public static float waveMakerSpeed = 1.0F;
 
-	public static int lavaResolution = 6;
+	public static int lavaResolution = 4;
 	public static float lavaFlipRatio = 0.9993F;
 	public static float lavaMaxSpeed = 5.0F;
 	public static float lavaFilmFriction = 140.0F;
@@ -213,10 +213,10 @@ public final class WaterSettings {
 	public static float slimeFilmDepth = 0.15F;
 	public static float slimeStrandedTime = 8.0F;
 	public static int slimeStrandedNeighbors = 4;
-	public static float slimeOpacity = 0.85F;
+	public static float slimeOpacity = 0.45F;
 	public static float slimeBrightness = 1.0F;
 	public static float slimeSurfaceSmoothing = 0.85F;
-	public static float slimeInsideOpacity = 0.92F;
+	public static float slimeInsideOpacity = 0.6F;
 	public static float slimeFogDistance = 0.5F;
 	public static boolean slimeSounds = true;
 
@@ -231,7 +231,7 @@ public final class WaterSettings {
 	public static float packWaterTint = 0.5F;
 	public static boolean packShadows = true;
 	public static float packShadowStrength = 0.55F;
-	public static boolean packShadowPerLeaf = true;
+	public static boolean packShadowPerLeaf = false;
 	public static int packShadowDetail = 4;
 	public static boolean packDrawMaterials = true;
 

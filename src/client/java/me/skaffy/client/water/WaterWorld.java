@@ -2279,9 +2279,9 @@ public final class WaterWorld {
 		boolean lavaFog = camera.fogType == FogType.LAVA;
 		putFloats(b, o + 3792, (float) (level.getMinY() - r.oy) * res - 8.0F, WaterRegion.KILL_MARGIN,
 			lavaFog ? camera.fogData.environmentalStart : 0.0F, lavaFog ? Math.max(camera.fogData.environmentalEnd, 0.01F) : 0.0F);
-		float detailStrength = sea ? WaterSettings.oceanDetailStrength : lava ? WaterSettings.lavaDetailStrength : slime ? 0.0F : WaterSettings.detailStrength;
-		float roughness = sea ? WaterSettings.oceanRoughness : lava ? WaterSettings.lavaRoughness : WaterSettings.roughness;
-		float specular = sea ? WaterSettings.oceanSpecular * glint : lava ? WaterSettings.lavaSpecular : slime ? 0.0F : WaterSettings.specular * glint;
+		float detailStrength = sea ? WaterSettings.oceanDetailStrength : lava ? WaterSettings.lavaDetailStrength : slime ? WaterSettings.lavaDetailStrength : WaterSettings.detailStrength;
+		float roughness = sea ? WaterSettings.oceanRoughness : lava ? WaterSettings.lavaRoughness : slime ? WaterSettings.lavaRoughness : WaterSettings.roughness;
+		float specular = sea ? WaterSettings.oceanSpecular * glint : lava ? WaterSettings.lavaSpecular : slime ? WaterSettings.lavaSpecular : WaterSettings.specular * glint;
 		putFloats(b, o + 3808, detailStrength, WaterSettings.detailScale, WaterSettings.detailSpeed, roughness);
 		putFloats(b, o + 3824, specular, WaterSettings.wetDarkening, WaterSettings.filmShading, WaterSettings.foamBubbleSize);
 
