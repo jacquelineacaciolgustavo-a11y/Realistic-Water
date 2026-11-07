@@ -2643,7 +2643,7 @@ public final class WaterWorld {
 				continue;
 			}
 			int flow = state.getValue(SourceBlock.FLOOD) ? 10 : state.getValue(SourceBlock.FLOW);
-			if (flow <= 0) {
+			if (flow <= 0 || !state.getValue(SourceBlock.ENABLED)) {
 				continue;
 			}
 			for (Direction d : Direction.values()) {

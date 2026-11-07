@@ -62,6 +62,9 @@ public class RealisticWaterClient implements ClientModInitializer {
 		ClientTickEvents.END_CLIENT_TICK.register(WaterSettingsScreen::tick);
 		me.skaffy.block.SourceBlock.clientOpener = me.skaffy.client.water.SourceScreen::openNextTick;
 		ClientTickEvents.END_CLIENT_TICK.register(me.skaffy.client.water.SourceScreen::tick);
+		me.skaffy.client.water.AguaKeys.register();
+		ClientTickEvents.END_CLIENT_TICK.register(me.skaffy.client.water.AguaConfigScreen::tick);
+		ClientCommandRegistrationCallback.EVENT.register(me.skaffy.client.water.AguaCommands::register);
 		ClientTickEvents.START_CLIENT_TICK.register(ClientBodies::startTick);
 		ClientTickEvents.END_CLIENT_TICK.register(ClientBodies::endTick);
 		ClientTickEvents.END_CLIENT_TICK.register(RealisticPlatform::tick);

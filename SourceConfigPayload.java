@@ -44,7 +44,7 @@ public record SourceConfigPayload(int x, int y, int z, int flow, boolean flood, 
 		if (this.all) {
 			for (Long key : new java.util.ArrayList<>(SourceBlock.known(level))) {
 				BlockPos other = BlockPos.of(key);
-				if (!level.hasChunkAt(other)) {
+				if (!level.isLoaded(other)) {
 					continue;
 				}
 				BlockState otherState = level.getBlockState(other);

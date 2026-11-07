@@ -39,6 +39,8 @@ public class SourceBlock extends Block {
 	public static final BooleanProperty WEST = BlockStateProperties.WEST;
 	public static final IntegerProperty FLOW = IntegerProperty.create("flow", 0, 10);
 	public static final BooleanProperty FLOOD = BooleanProperty.create("flood");
+	/** Liga/desliga o fonte inteiro sem perder quais saidas estavam abertas. */
+	public static final BooleanProperty ENABLED = BooleanProperty.create("enabled");
 
 	private static final int PLACE_FLAGS = Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE | Block.UPDATE_SKIP_ON_PLACE;
 
@@ -60,7 +62,7 @@ public class SourceBlock extends Block {
 		this.registerDefaultState(this.stateDefinition.any()
 			.setValue(UP, false).setValue(DOWN, false).setValue(NORTH, false)
 			.setValue(SOUTH, false).setValue(EAST, false).setValue(WEST, false)
-			.setValue(FLOW, 5).setValue(FLOOD, false));
+			.setValue(FLOW, 5).setValue(FLOOD, false).setValue(ENABLED, true));
 	}
 
 	public static BooleanProperty faceProperty(Direction direction) {
@@ -109,7 +111,7 @@ public class SourceBlock extends Block {
 			level.scheduleTick(pos, this, 40);
 			return;
 		}
-		if (flow > 0) {
+		if (flow > 0 && state.getValue(ENABLED)) {
 			for (Direction direction : Direction.values()) {
 				if (state.getValue(faceProperty(direction))) {
 					this.emit(level, pos, direction, flood);
@@ -212,6 +214,6 @@ public class SourceBlock extends Block {
 
 	@Override
 	protected void createBlockStateDefinition(final StateDefinition.Builder<Block, BlockState> builder) {
-		builder.add(UP, DOWN, NORTH, SOUTH, EAST, WEST, FLOW, FLOOD);
+		builder.add(UP, DOWN, NORTH, SOUTH, EAST, WEST, FLOW, FLOOD, ENABLED);
 	}
 }
