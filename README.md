@@ -1,80 +1,131 @@
-# Realistic Water
-A Minecraft mod that adds a lot of cool, realistic stuff from Minecraft Blender animations.
+ Realistic Fluids
 
-![Project Screenshot](images/1.png)
+**English** | [Português (Brasil)](README.pt-BR.md)
 
-#
+> **This is a modified version of the mod _Realistic Water_, created by Skaffy.**
+> It is not the original mod.
+> Original mod: https://github.com/sskaffy/Realistic-Water
+> All credit for the base mod (fluid simulation, rendering, realistic blocks and physics) goes to **Skaffy**.
+> This version is distributed under the same license as the original. See the `LICENÇA` file, which has been kept intact.
 
-How to use:
+This version is meant for **personal use and testing**. Some parts have not been fully tested yet and may contain bugs.
 
-1. Download the latest version from: https://github.com/sskaffy/Realistic-Water/releases/
-2. Install Fabric (Tutorial: https://docs.fabricmc.net/players/installing-fabric/)
-3. Put the mod to the mods folder
-4. Open the game and set the Graphics API in the Video Settings to Vulkan and then restart the game
-5. Search up "Realistic" in the creative inventory to look at all the items from the mod
-6. Use the "Realistic Convertor" to convert boats, redstone, or any full blocks into realistic blocks that have gravity
-8. Grab a realistic block with right click (or shift-right click if normal right click has an interaction with that block)
-9. Remove realistic things: "/water remove" to remove water and "/water remove <block>" for everything else (op only) 
-10. Use "Water Pump" to move water in ways it couldn't flow by itself (has to be powered by redstone)
-11. Customize most things about how things look/move in "/water gui" (or just "/water" if you aren't op)
-12. Turn on Realistic Ocean in "/water" or in sodium settings (this makes oceans look realistic and adds realistic physics to the water)
-13. Use shaders with Vitrail! Any OF/Iris shaders (even Complementary Shaders) will work, download Vitrail from: https://modrinth.com/mod/vitrail-shaders
+---
 
-#
+## Requirements
 
-### What the mod contains:
+- Minecraft **26.3**
+- **Fabric Loader**
+- **Fabric API**
+- A graphics card with **Vulkan** support
 
-- Realistic water
-- Small Bucket of Realistic water (puts down only 1 block of realistic water instead of an infinite source)
-- Realistic water boiling, moving with pumps, ultra realistic physics, reacting to entities, swim in it, react to realistic blocks
-- Realistic blocks (can be obtained by right clicking a Realistic Convertor and putting any block inside)
-- Realistic blocks can be grabbed with right click, to bypass how heavy things you can grab turn on "OP Grabbing"
-- Realistic boat, works the best with realistic water, can be obtained via the Realistic Convertor
-- Realistic lava, burns things, converts into cobble stone on realistic water contact, burns flameable realistic blocks, burns leaves
-- Realistic sand
-- Realistic leaves
+## Installation
+
+1. Install Fabric: https://docs.fabricmc.net/players/installing-fabric/
+2. Put this mod's `.jar` and Fabric API in your `mods` folder.
+3. Open the game, go to **Video Settings**, set the graphics API to **Vulkan**, then restart the game.
+4. In the creative inventory, open the **Realistic Fluids** tab to see every item.
+
+If you are updating from an older version, delete the `realistic-water.properties` file from your `config` folder. It overrides the new default values.
+
+---
+
+## What is different from the original mod
+
+- The **`/water` command was removed** (including `/water gui` and `/water remove`).
+- **Water and lava buckets** place a single **finite block** of liquid. They no longer create an infinite source.
+- New **source blocks** for water, lava and slime, with flow rate, pressure and flood mode (see below).
+- A dedicated **creative tab** called Realistic Fluids.
+- **Slime** was redesigned with a lava-style look, green and more transparent, and it behaves stickier.
+- **Lava + water** now produces **hot obsidian in layers**, which cools down into regular obsidian.
+- **Lighter default settings**, so water and lava are less demanding on your computer.
+- New mod name and icon, plus Portuguese (pt_br) translations.
+
+---
+
+## Source blocks (Water Source, Lava Source, Slime Source)
+
+These blocks release liquid continuously. When placed, **all outputs start closed**.
+
+| Action | What happens |
+| --- | --- |
+| **Right-click while standing** | Opens or closes the output on the face you clicked. A message appears, for example "Top output open". |
+| **Right-click while sneaking** (empty hand) | Opens the **Source flow** screen. |
+
+An open face shows a colored square on its texture. A closed face stays plain.
+
+### "Source flow" screen
+
+- **Flow (0 to 1000):** in steps of 100. The higher the flow, the **more liquid comes out and the harder it is pushed**, shooting the fluid with more force in the direction of the output.
+- **Flood mode:** forces the flow to **1000** and keeps shooting a large amount of liquid in the direction of the open outputs.
+- **ALL:** applies the saved settings to **every loaded source block in the world** (water, lava and slime).
+- **Save:** stores the settings.
+
+### Source optimization
+
+- A source only works while a player is within 96 blocks of it.
+- There is a cap on how many liquid blocks are created at once and on how many jets are active per simulation region.
+
+---
+
+## Lava + water = hot obsidian
+
+When realistic lava meets water, a **Hot Obsidian** block appears:
+
+1. It glows like magma and grows in **layers** while lava and water are still touching it.
+2. At 8 layers it starts growing upward.
+3. Over time it **cools down** and becomes **regular obsidian**. If it stopped partway, it stays as a cold obsidian layer.
+4. If the space is occupied by water and there is a **solid ceiling** above, nothing grows: the fluid just disappears.
+
+Vanilla (non-mod) lava still turns into stone as before.
+
+---
+
+## What the mod contains
+
+Items from the original mod (Skaffy):
+
+- Realistic water, with boiling, steam, heating, cooling and ultra-realistic physics
+- Realistic lava (burns things and flammable blocks)
 - Realistic slime
-- Realistic things react to TNT (you can grab a realistic TNT and throw it)
-- Realistic rain that the realistic water reacts to and the rain feeds the water (makes steam in lava)
-- Sodium menu support
-- Clip rendering and packing it into a mp4 with ffmpeg (the mod doesnt contain ffmpeg, you have to download it manually though you only need this if you wanna render clips inside the mod. you can just use obs)
-- Water pumps, moves the water from its input to its output when powered by redstone (you can change the speed of it by right clicking on it) (realistic pump works in realistic ocean)
-- Water starts disappearing after being boiled for too long on too high temperature
-- Water makes steam, boiling sounds, boiling particles on high temperature
-- Water heats up by being too close to hot things like Magma Block, Campfire, Lava, Fire
-- Too hot water damages you if you are inside
-- Water cools down by having cold blocks around it like Ice, Snow Block, Snow or being in cold biomes. Putting more water in hot water will just make warm water which then cools down to the biome's temperature
-- Realistic things like water, lava can go through any portals
-- Vitrail shader loader support (Vitrail can load in any OF/Iris shader on Vulkan)
-- Realistic Ocean, changes how the oceans render plus it reacts to entities/realistic items from this mod
-- Realistic kelp, its a toggle you can turn on/off in "/water" it lets you grab a kelp, move it, and it will react to things around it
+- Realistic sand and realistic leaves
+- Realistic boat
+- Water Pump (moves water from its input to its output when powered by redstone; right-click to change its speed)
+- **Realistic Converter**, to turn whole blocks into realistic blocks with gravity
+- Realistic rain that feeds water
+- Realistic objects react to TNT
+- Realistic liquids can travel through portals
+- Sodium options menu support
+- Vitrail shader loader support (OF/Iris shaders on Vulkan): https://modrinth.com/mod/vitrail-shaders
+- MP4 clip rendering with ffmpeg (ffmpeg is not included)
 
-**Showcase:** https://www.youtube.com/watch?v=lwkttY9Xcmk
+Items and blocks added in this version:
 
-#
+- Realistic water, lava and slime buckets (1 finite block)
+- Small realistic water bucket
+- Water Source, Lava Source and Slime Source
+- Hot Obsidian (created when lava meets water, not obtainable from the inventory)
 
-**Realistic Blocks:**
+---
 
-![Project Screenshot](images/7.png)
+## Building
 
-**Realistic Kelp:**
+The project uses Gradle. To build:
 
-![Project Screenshot](images/2.png)
+```
+./gradlew build
+```
 
-**Bridge made out of Realistic Blocks:**
+The mod's `.jar` is created in `build/libs`. Use the file that does **not** end in `-sources`.
 
-![Project Screenshot](images/6.png)
+The repository also has a GitHub Actions workflow (`.github/workflows/build.yml`) that builds the mod in the cloud and makes the `.jar` available under **Artifacts**.
 
-**Realistic Block burns in Realistic Lava:**
+---
 
-![Project Screenshot](images/4.png)
+## Credits and license
 
-**Realistic Water turns into steam after entering the nether:**
+- **Original mod: Realistic Water by Skaffy** — https://github.com/sskaffy/Realistic-Water
+- This modified version keeps the original license. Read the `LICENÇA` file.
+- Summary of the license rules (read the full text for details): you may fork and distribute a modified version as long as you credit Skaffy, keep the link to the original project, make clear that it is a modified version, and keep the same license. You **may not** sell the mod, put it behind a paywall, or claim the original work as your own.
 
-![Project Screenshot](images/5.png)
-
-**Realistic Water flowing:**
-
-![Project Screenshot](images/3.png)
-
-Credits: https://github.com/claude and https://github.com/eva-akselrad
+The mod is provided "as is", without warranty of any kind.
