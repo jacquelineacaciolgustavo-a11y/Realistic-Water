@@ -9,6 +9,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.RandomSource;
@@ -57,7 +58,7 @@ public class SourceBlock extends Block {
 		super(properties);
 		this.kind = kind;
 		this.registerDefaultState(this.stateDefinition.any()
-			.setValue(UP, true).setValue(DOWN, false).setValue(NORTH, false)
+			.setValue(UP, false).setValue(DOWN, false).setValue(NORTH, false)
 			.setValue(SOUTH, false).setValue(EAST, false).setValue(WEST, false)
 			.setValue(FLOW, 5).setValue(FLOOD, false));
 	}
@@ -102,22 +103,41 @@ public class SourceBlock extends Block {
 	@Override
 	protected void tick(final BlockState state, final ServerLevel level, final BlockPos pos, final RandomSource random) {
 		known(level).add(pos.asLong());
-		int flow = state.getValue(FLOW);
 		boolean flood = state.getValue(FLOOD);
-		if (flow > 0 || flood) {
+		int flow = flood ? 10 : state.getValue(FLOW);
+		if (!playerNear(level, pos)) {
+			level.scheduleTick(pos, this, 40);
+			return;
+		}
+		if (flow > 0) {
 			for (Direction direction : Direction.values()) {
 				if (state.getValue(faceProperty(direction))) {
 					this.emit(level, pos, direction, flood);
 				}
 			}
 		}
-		int delay = flood ? 3 : flow > 0 ? Math.max(1, 11 - flow) : 20;
+		int delay = flood ? 2 : flow > 0 ? Math.max(1, 11 - flow) : 20;
 		level.scheduleTick(pos, this, delay);
 	}
 
-	private static final int FLOOD_DEPTH = 3;
-	private static final int FLOOD_HALF_WIDTH = 2;
-	private static final int FLOOD_CAP = 48;
+	private static boolean playerNear(ServerLevel level, BlockPos pos) {
+		double limit = 96.0 * 96.0;
+		for (ServerPlayer player : level.players()) {
+			if (player.distanceToSqr(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5) < limit) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/** 0 = agua, 1 = lava, 2 = slime. */
+	public int kind() {
+		return this.kind;
+	}
+
+	private static final int FLOOD_DEPTH = 1;
+	private static final int FLOOD_HALF_WIDTH = 1;
+	private static final int FLOOD_CAP = 9;
 
 	private void emit(ServerLevel level, BlockPos pos, Direction direction, boolean flood) {
 		if (!flood) {

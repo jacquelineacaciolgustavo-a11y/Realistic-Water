@@ -28,6 +28,7 @@ import me.skaffy.client.vk.Vk;
 import me.skaffy.client.vk.VkBuf;
 import me.skaffy.client.vk.VkTex;
 import me.skaffy.block.RealisticWaterBlock;
+import me.skaffy.block.SourceBlock;
 import me.skaffy.block.WaveMakerBlock;
 import me.skaffy.fluid.RealisticLavaFluid;
 import me.skaffy.fluid.RealisticSlimeFluid;
@@ -179,6 +180,7 @@ public final class WaterWorld {
 	private final Long2IntOpenHashMap recentMixes = new Long2IntOpenHashMap();
 	private final Map<Integer, double[]> bodyFlows = new HashMap<>();
 	private final LongOpenHashSet waveMakers = new LongOpenHashSet();
+	private final LongOpenHashSet sourceBlocks = new LongOpenHashSet();
 	private final LongOpenHashSet portalBlocks = new LongOpenHashSet();
 	private final LongOpenHashSet vanillaFeeds = new LongOpenHashSet();
 	private final Map<Integer, SolidCache> solidCaches = new HashMap<>();
@@ -755,6 +757,11 @@ public final class WaterWorld {
 		} else if (oldState.getBlock() instanceof WaveMakerBlock) {
 			this.waveMakers.remove(key);
 		}
+		if (newState.getBlock() instanceof SourceBlock) {
+			this.sourceBlocks.add(key);
+		} else if (oldState.getBlock() instanceof SourceBlock) {
+			this.sourceBlocks.remove(key);
+		}
 		if (WaterRegion.thermalCode(oldState) != WaterRegion.thermalCode(newState)) {
 			for (WaterRegion r : this.regions) {
 				if (r.material == Material.WATER && r.windowContains(pos, 1)) {
@@ -854,6 +861,7 @@ public final class WaterWorld {
 					|| state.getBlock() == ModContent.REALISTIC_SAND
 					|| state.getBlock() == ModContent.REALISTIC_LEAVES
 					|| state.getBlock() == ModContent.WAVE_MAKER
+					|| state.getBlock() instanceof SourceBlock
 					|| state.getBlock() instanceof Portal)) {
 				continue;
 			}
@@ -871,6 +879,10 @@ public final class WaterWorld {
 				int leaves = RealisticLeavesBlock.layers(state);
 				if (state.getBlock() == ModContent.WAVE_MAKER) {
 					this.waveMakers.add(BlockPos.asLong((chunkPos.x() << 4) + (i & 15), baseY + ((i >> 4) & 15), (chunkPos.z() << 4) + (i >> 8)));
+					continue;
+				}
+				if (state.getBlock() instanceof SourceBlock) {
+					this.sourceBlocks.add(BlockPos.asLong((chunkPos.x() << 4) + (i & 15), baseY + ((i >> 4) & 15), (chunkPos.z() << 4) + (i >> 8)));
 					continue;
 				}
 				if (water == 0 && lava == 0 && slime == 0 && sand == 0 && leaves == 0) {
@@ -1382,7 +1394,7 @@ public final class WaterWorld {
 			fresh.add(key);
 			this.removeMaterial(p, 0.0, 1.0, Material.LAVA);
 			this.removeMaterial(p, 0.0, 1.0, Material.WATER);
-			level.setBlock(p, FluidMixing.resultFor(state).defaultBlockState(), Block.UPDATE_ALL_IMMEDIATE);
+			level.setBlock(p, FluidMixing.resultStateFor(level, p, state), Block.UPDATE_ALL_IMMEDIATE);
 		}
 		if (fresh.isEmpty() || !ClientPlayNetworking.canSend(FluidMixPayload.TYPE)) {
 			return;
@@ -2600,6 +2612,65 @@ public final class WaterWorld {
 			putFloats(b, base + 32, d.getStepX() * speed, d.getStepY() * speed, d.getStepZ() * speed, 0.0F);
 			n++;
 		}
+		return this.writeSourceJets(mc.level, r, b, o, n);
+	}
+
+	private static final int MAX_JETS = 6;
+
+	/** Cada saida aberta de um bloco fonte vira um jato: quanto maior a vazao, mais forte ele empurra o liquido. */
+	private int writeSourceJets(ClientLevel level, WaterRegion r, ByteBuffer b, int o, int n) {
+		if (this.sourceBlocks.isEmpty() || !r.material.isFluidSim()) {
+			return n;
+		}
+		float res = r.res;
+		int jets = 0;
+		LongArrayList gone = null;
+		for (long key : this.sourceBlocks) {
+			if (n >= MAX_ENTITIES || jets >= MAX_JETS) {
+				break;
+			}
+			BlockPos p = BlockPos.of(key);
+			BlockState state = level.getBlockState(p);
+			if (!(state.getBlock() instanceof SourceBlock source)) {
+				if (gone == null) {
+					gone = new LongArrayList();
+				}
+				gone.add(key);
+				continue;
+			}
+			Material kind = source.kind() == 1 ? Material.LAVA : source.kind() == 2 ? Material.SLIME : Material.WATER;
+			if (kind != r.material || !r.windowContains(p, 2)) {
+				continue;
+			}
+			int flow = state.getValue(SourceBlock.FLOOD) ? 10 : state.getValue(SourceBlock.FLOW);
+			if (flow <= 0) {
+				continue;
+			}
+			for (Direction d : Direction.values()) {
+				if (n >= MAX_ENTITIES || jets >= MAX_JETS) {
+					break;
+				}
+				if (!state.getValue(SourceBlock.faceProperty(d))) {
+					continue;
+				}
+				Vec3 dir = new Vec3(d.getStepX(), d.getStepY(), d.getStepZ());
+				Vec3 intake = Vec3.atCenterOf(p).add(dir);
+				Vec3 jump = dir.scale(1.0 + flow * 0.25);
+				float rate = 4.0F * flow / 10.0F;
+				float speed = (2.0F + flow * 1.6F) * res;
+				int base = o + n * 48;
+				putFloats(b, base, (float) (intake.x - 0.5 - r.ox) * res, (float) (intake.y - 0.5 - r.oy) * res, (float) (intake.z - 0.5 - r.oz) * res, rate);
+				putFloats(b, base + 16, (float) (intake.x + 0.5 - r.ox) * res, (float) (intake.y + 0.5 - r.oy) * res, (float) (intake.z + 0.5 - r.oz) * res, speed);
+				putFloats(b, base + 32, (float) jump.x * res, (float) jump.y * res, (float) jump.z * res, 2.0F);
+				n++;
+				jets++;
+			}
+		}
+		if (gone != null) {
+			for (long key : gone) {
+				this.sourceBlocks.remove(key);
+			}
+		}
 		return n;
 	}
 
@@ -2851,6 +2922,7 @@ public final class WaterWorld {
 		this.sources.clear();
 		this.chunkScanQueue.clear();
 		this.waveMakers.clear();
+		this.sourceBlocks.clear();
 		this.portalBlocks.clear();
 		this.pumpCache.clear();
 		this.pumpCacheFrame = -1L;

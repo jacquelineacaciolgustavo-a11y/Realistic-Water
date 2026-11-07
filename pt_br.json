@@ -25,5 +25,6 @@
   "block.realistic-water.source.face.south": "sul",
   "block.realistic-water.source.face.east": "leste",
   "block.realistic-water.source.face.west": "oeste",
-  "itemGroup.realistic-water.realistic_fluids": "Realistic Fluids"
+  "itemGroup.realistic-water.realistic_fluids": "Realistic Fluids",
+  "block.realistic-water.hot_obsidian": "Obsidiana Quente"
 }

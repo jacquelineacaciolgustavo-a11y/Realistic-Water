@@ -3,6 +3,7 @@ package me.skaffy;
 import me.skaffy.block.RealisticLavaBlock;
 import me.skaffy.block.RealisticLeavesBlock;
 import me.skaffy.block.RealisticSandBlock;
+import me.skaffy.block.HotObsidianBlock;
 import me.skaffy.block.RealisticWaterBlock;
 import me.skaffy.block.SourceBlock;
 import me.skaffy.fluid.FiniteBucketItem;
@@ -141,6 +142,18 @@ public final class ModContent {
 			level.gameEvent(user, GameEvent.FLUID_PLACE, pos);
 		}
 	});
+
+	public static final ResourceKey<Block> HOT_OBSIDIAN_KEY = ResourceKey.create(Registries.BLOCK, RealisticWater.id("hot_obsidian"));
+	public static final Block HOT_OBSIDIAN = Registry.register(BuiltInRegistries.BLOCK, HOT_OBSIDIAN_KEY, new HotObsidianBlock(
+		BlockBehaviour.Properties.of()
+			.mapColor(MapColor.COLOR_BLACK)
+			.instrument(NoteBlockInstrument.BASEDRUM)
+			.strength(50.0F, 1200.0F)
+			.sound(SoundType.STONE)
+			.noOcclusion()
+			.lightLevel(state -> state.getValue(HotObsidianBlock.HEAT) > 0 ? 9 : 0)
+			.setId(HOT_OBSIDIAN_KEY)
+	));
 
 	public static final ResourceKey<Block> REALISTIC_SAND_KEY = ResourceKey.create(Registries.BLOCK, RealisticWater.id("realistic_sand"));
 	public static final Block REALISTIC_SAND = Registry.register(BuiltInRegistries.BLOCK, REALISTIC_SAND_KEY, new RealisticSandBlock(
