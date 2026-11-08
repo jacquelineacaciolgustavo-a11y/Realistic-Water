@@ -1,0 +1,31 @@
+{
+  "textures": {
+    "hole": "realistic-water:block/source_cola_hole",
+    "particle": "realistic-water:block/source_cola_side"
+  },
+  "elements": [
+    {
+      "from": [
+        0,
+        0,
+        16
+      ],
+      "to": [
+        16,
+        16,
+        16.02
+      ],
+      "faces": {
+        "south": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#hole"
+        }
+      }
+    }
+  ]
+}
