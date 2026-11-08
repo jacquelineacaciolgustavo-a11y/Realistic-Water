@@ -266,7 +266,6 @@ public final class ModContent {
             output.accept(RealisticBlockItem.of(Blocks.SNOW_BLOCK, 1));
             output.accept(REALISTIC_SAND_ITEM);
             output.accept(REALISTIC_LEAVES_ITEM);
-            output.accept(HOT_OBSIDIAN.asItem());
         })
         .build());
 
