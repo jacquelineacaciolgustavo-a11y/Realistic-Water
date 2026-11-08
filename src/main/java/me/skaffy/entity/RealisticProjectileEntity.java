@@ -10,7 +10,7 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.projectile.ThrowableItemProjectile;
+import net.minecraft.world.entity.projectile.throwableitemprojectile.ThrowableItemProjectile;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
@@ -27,8 +27,10 @@ public class RealisticProjectileEntity extends ThrowableItemProjectile {
     }
 
     public RealisticProjectileEntity(Level level, LivingEntity shooter, int kind) {
-        super(ModContent.REALISTIC_PROJECTILE, shooter, level);
+        super(ModContent.REALISTIC_PROJECTILE, level);
         this.kind = kind;
+        this.setOwner(shooter);
+        this.setPos(shooter.getX(), shooter.getEyeY() - 0.1D, shooter.getZ());
     }
 
     @Override

@@ -3,7 +3,6 @@ package me.skaffy.entity;
 import me.skaffy.ModContent;
 import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
@@ -15,6 +14,8 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.projectile.ItemSupplier;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.phys.Vec3;
 
 public class DrippingSplatEntity extends Entity implements ItemSupplier {
@@ -76,18 +77,14 @@ public class DrippingSplatEntity extends Entity implements ItemSupplier {
     }
 
     @Override
-    protected void readAdditionalSaveData(CompoundTag compound) {
-        if (compound.contains("LifeTicks")) {
-            this.lifeTicks = compound.getInt("LifeTicks");
-        }
-        if (compound.contains("IsSlime")) {
-            this.entityData.set(IS_SLIME, compound.getBoolean("IsSlime"));
-        }
+    protected void readAdditionalSaveData(ValueInput input) {
+        this.lifeTicks = input.getIntOr("LifeTicks", 0);
+        this.entityData.set(IS_SLIME, input.getIntOr("IsSlime", 1) != 0);
     }
 
     @Override
-    protected void addAdditionalSaveData(CompoundTag compound) {
-        compound.putInt("LifeTicks", this.lifeTicks);
-        compound.putBoolean("IsSlime", this.entityData.get(IS_SLIME));
+    protected void addAdditionalSaveData(ValueOutput output) {
+        output.putInt("LifeTicks", this.lifeTicks);
+        output.putInt("IsSlime", this.entityData.get(IS_SLIME) ? 1 : 0);
     }
 }
