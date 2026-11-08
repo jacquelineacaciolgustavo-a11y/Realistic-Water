@@ -2616,17 +2616,24 @@ public final class WaterWorld {
 	}
 
 	private static final int MAX_JETS = 6;
+	private static final int MAX_FLOOD_JETS = 14;
 
-	/** Cada saida aberta de um bloco fonte vira um jato: quanto maior a vazao, mais forte ele empurra o liquido. */
+	/**
+	 * Cada saida aberta de um bloco fonte vira um jato: quanto maior a vazao, mais forte ele empurra o liquido.
+	 * No modo alagamento a fonte espirra pelo topo e pelos lados (inclinado pra cima), com muito mais vazao e
+	 * velocidade, e a regiao fica viscosa (gelatinosa) pra a agua acumular em vez de escorrer pros lados.
+	 */
 	private int writeSourceJets(ClientLevel level, WaterRegion r, ByteBuffer b, int o, int n) {
+		r.floodViscous = false;
 		if (this.sourceBlocks.isEmpty() || !r.material.isFluidSim()) {
 			return n;
 		}
 		float res = r.res;
 		int jets = 0;
+		boolean anyFlood = false;
 		LongArrayList gone = null;
 		for (long key : this.sourceBlocks) {
-			if (n >= MAX_ENTITIES || jets >= MAX_JETS) {
+			if (n >= MAX_ENTITIES || jets >= MAX_FLOOD_JETS) {
 				break;
 			}
 			BlockPos p = BlockPos.of(key);
@@ -2642,15 +2649,26 @@ public final class WaterWorld {
 			if (kind != r.material || !r.windowContains(p, 2)) {
 				continue;
 			}
-			int flow = state.getValue(SourceBlock.FLOOD) ? 10 : state.getValue(SourceBlock.FLOW);
+			boolean flood = state.getValue(SourceBlock.FLOOD);
+			int flow = flood ? 10 : state.getValue(SourceBlock.FLOW);
 			if (flow <= 0 || !state.getValue(SourceBlock.ENABLED)) {
 				continue;
 			}
+			int limit = flood ? MAX_FLOOD_JETS : MAX_JETS;
+			if (flood) {
+				anyFlood = true;
+			}
+			boolean anyOpen = false;
 			for (Direction d : Direction.values()) {
-				if (n >= MAX_ENTITIES || jets >= MAX_JETS) {
+				anyOpen |= state.getValue(SourceBlock.faceProperty(d));
+			}
+			for (Direction d : Direction.values()) {
+				if (n >= MAX_ENTITIES || jets >= limit) {
 					break;
 				}
-				if (!state.getValue(SourceBlock.faceProperty(d))) {
+				// Alagamento sem nenhuma saida aberta espirra por cima e pelos 4 lados (nunca pra baixo).
+				boolean open = anyOpen ? state.getValue(SourceBlock.faceProperty(d)) : flood && d != Direction.DOWN;
+				if (!open) {
 					continue;
 				}
 				Vec3 dir = new Vec3(d.getStepX(), d.getStepY(), d.getStepZ());
@@ -2658,6 +2676,15 @@ public final class WaterWorld {
 				Vec3 jump = dir.scale(1.0 + flow * 0.25);
 				float rate = 4.0F * flow / 10.0F;
 				float speed = (2.0F + flow * 1.6F) * res;
+				if (flood) {
+					if (d.getAxis().isHorizontal()) {
+						jump = new Vec3(dir.x, 1.2, dir.z).scale(1.0 + flow * 0.25);
+					} else {
+						jump = jump.scale(1.3);
+					}
+					rate = FLOOD_RATE;
+					speed = (2.0F + flow * 1.6F) * FLOOD_SPEED_BOOST * res;
+				}
 				int base = o + n * 48;
 				putFloats(b, base, (float) (intake.x - 0.5 - r.ox) * res, (float) (intake.y - 0.5 - r.oy) * res, (float) (intake.z - 0.5 - r.oz) * res, rate);
 				putFloats(b, base + 16, (float) (intake.x + 0.5 - r.ox) * res, (float) (intake.y + 0.5 - r.oy) * res, (float) (intake.z + 0.5 - r.oz) * res, speed);
@@ -2666,6 +2693,7 @@ public final class WaterWorld {
 				jets++;
 			}
 		}
+		r.floodViscous = anyFlood && r.material == Material.WATER;
 		if (gone != null) {
 			for (long key : gone) {
 				this.sourceBlocks.remove(key);
@@ -2673,6 +2701,10 @@ public final class WaterWorld {
 		}
 		return n;
 	}
+
+	/** Taxa de emissao e reforco de velocidade dos jatos do modo alagamento (ajuste aqui se quiser mais/menos agua). */
+	private static final float FLOOD_RATE = 12.0F;
+	private static final float FLOOD_SPEED_BOOST = 1.5F;
 
 	private boolean paddleNear(ClientLevel level, WaterRegion r) {
 		if (!r.hasWindow || r.material != Material.WATER) {
