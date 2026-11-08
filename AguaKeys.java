@@ -1,68 +1,162 @@
 package me.skaffy.client.water;
 
 import com.mojang.blaze3d.platform.InputConstants;
+import java.util.ArrayList;
+import java.util.List;
 import me.skaffy.RealisticWater;
+import me.skaffy.block.SourceBlock;
 import me.skaffy.net.SourceToggleAllPayload;
+import me.skaffy.net.SourceToggleVisiblePayload;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
-import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
+import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.HitResult;
+import net.minecraft.world.phys.Vec3;
 import org.lwjgl.glfw.GLFW;
 
-/** Teclas de atalho: alternar fontes de cada fluido e limpar tudo. */
 public final class AguaKeys {
-	private static KeyMapping water;
-	private static KeyMapping lava;
-	private static KeyMapping slime;
-	private static KeyMapping clear;
+    /** kind >= 6 significa "todos os tipos de fonte" no SourceToggleAllPayload. */
+    private static final int ALL_KINDS = 6;
+    /** Raio (em blocos) em que a tecla N procura fontes na tela. */
+    private static final int VISIBLE_RADIUS = 64;
 
-	private AguaKeys() {
-	}
+    private static KeyMapping keyCloseAll;
+    private static KeyMapping keyOpenVisible;
+    private static KeyMapping keyInteractRemote;
+    private static KeyMapping keyEmergencyClear;
 
-	public static void register() {
-		KeyMapping.Category category = KeyMapping.Category.register(RealisticWater.id("realistic_fluids"));
-		water = KeyMappingHelper.registerKeyMapping(new KeyMapping("key.realistic-water.sources_water", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_F6, category));
-		lava = KeyMappingHelper.registerKeyMapping(new KeyMapping("key.realistic-water.sources_lava", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_F7, category));
-		slime = KeyMappingHelper.registerKeyMapping(new KeyMapping("key.realistic-water.sources_slime", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_F8, category));
-		clear = KeyMappingHelper.registerKeyMapping(new KeyMapping("key.realistic-water.clear_all", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_F9, category));
-		ClientTickEvents.END_CLIENT_TICK.register(AguaKeys::tick);
-	}
+    private AguaKeys() {}
 
-	private static void tick(Minecraft mc) {
-		while (water.consumeClick()) {
-			sources(mc, 0, 2);
-		}
-		while (lava.consumeClick()) {
-			sources(mc, 1, 2);
-		}
-		while (slime.consumeClick()) {
-			sources(mc, 2, 2);
-		}
-		while (clear.consumeClick()) {
-			clearAll(mc);
-		}
-	}
+    public static void register() {
+        KeyMapping.Category category = KeyMapping.Category.register(RealisticWater.id("realistic_fluids"));
 
-	/** kind: 0 agua, 1 lava, 2 slime, 3 todos. mode: 0 fechar, 1 abrir, 2 alternar. */
-	public static void sources(Minecraft mc, int kind, int mode) {
-		if (mc.player != null && ClientPlayNetworking.canSend(SourceToggleAllPayload.TYPE)) {
-			ClientPlayNetworking.send(new SourceToggleAllPayload((byte) kind, (byte) mode));
-		}
-	}
+        keyCloseAll = KeyMappingHelper.registerKeyMapping(new KeyMapping(
+            "key.realistic-water.close_all_sources", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_B, category));
 
-	/** Remove todos os fluidos realistas perto de voce e fecha todos os fontes. */
-	public static void clearAll(Minecraft mc) {
-		if (mc.player == null) {
-			return;
-		}
-		int radius = mc.options.renderDistance().get() + 2;
-		WaterWorld world = WaterWorld.get();
-		world.removeAll(radius, Material.WATER);
-		world.removeAll(radius, Material.LAVA);
-		world.removeAll(radius, Material.SLIME);
-		sources(mc, 3, 0);
-		mc.player.sendSystemMessage(Component.translatable("realistic-water.agua.cleared"));
-	}
+        keyOpenVisible = KeyMappingHelper.registerKeyMapping(new KeyMapping(
+            "key.realistic-water.open_visible_sources", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_N, category));
+
+        keyInteractRemote = KeyMappingHelper.registerKeyMapping(new KeyMapping(
+            "key.realistic-water.interact_remote", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_G, category));
+
+        keyEmergencyClear = KeyMappingHelper.registerKeyMapping(new KeyMapping(
+            "key.realistic-water.emergency_clear", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_J, category));
+
+        ClientTickEvents.END_CLIENT_TICK.register(AguaKeys::tick);
+    }
+
+    private static void tick(Minecraft mc) {
+        while (keyCloseAll.consumeClick()) {
+            if (mc.screen == null) {
+                sources(mc, ALL_KINDS, 0);
+            }
+        }
+
+        while (keyOpenVisible.consumeClick()) {
+            if (mc.screen == null) {
+                openVisible(mc);
+            }
+        }
+
+        while (keyInteractRemote.consumeClick()) {
+            if (mc.screen == null) {
+                interactRemote(mc);
+            }
+        }
+
+        while (keyEmergencyClear.consumeClick()) {
+            if (mc.screen == null) {
+                clearAllEmergency(mc);
+            }
+        }
+    }
+
+    /** N: abre so os fontes que estao dentro do campo de visao (o que aparece na tela). */
+    private static void openVisible(Minecraft mc) {
+        if (mc.player == null || mc.level == null) return;
+        if (!ClientPlayNetworking.canSend(SourceToggleVisiblePayload.TYPE)) return;
+
+        Vec3 eye = mc.player.getEyePosition();
+        Vec3 forward = mc.player.getViewVector(1.0F).normalize();
+        Vec3 right = forward.cross(new Vec3(0.0, 1.0, 0.0));
+        if (right.lengthSqr() < 1.0E-6) {
+            right = new Vec3(1.0, 0.0, 0.0);
+        }
+        right = right.normalize();
+        Vec3 up = right.cross(forward).normalize();
+
+        double tanY = Math.tan(Math.toRadians(mc.options.fov().get()) * 0.5) * 1.15;
+        double aspect = (double) mc.getWindow().getWidth() / Math.max(1, mc.getWindow().getHeight());
+        double tanX = tanY * aspect;
+
+        List<BlockPos> found = new ArrayList<>();
+        BlockPos center = mc.player.blockPosition();
+        BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos();
+        double maxDistSq = (double) VISIBLE_RADIUS * VISIBLE_RADIUS;
+
+        for (int dx = -VISIBLE_RADIUS; dx <= VISIBLE_RADIUS && found.size() < SourceToggleVisiblePayload.MAX_POSITIONS; dx++) {
+            for (int dz = -VISIBLE_RADIUS; dz <= VISIBLE_RADIUS && found.size() < SourceToggleVisiblePayload.MAX_POSITIONS; dz++) {
+                if (dx * dx + dz * dz > maxDistSq) continue;
+                for (int dy = -VISIBLE_RADIUS; dy <= VISIBLE_RADIUS; dy++) {
+                    cursor.set(center.getX() + dx, center.getY() + dy, center.getZ() + dz);
+                    BlockState state = mc.level.getBlockState(cursor);
+                    if (!(state.getBlock() instanceof SourceBlock)) continue;
+
+                    double ox = cursor.getX() + 0.5 - eye.x;
+                    double oy = cursor.getY() + 0.5 - eye.y;
+                    double oz = cursor.getZ() + 0.5 - eye.z;
+                    double depth = ox * forward.x + oy * forward.y + oz * forward.z;
+                    if (depth <= 0.0) continue;
+                    double sx = (ox * right.x + oy * right.y + oz * right.z) / depth;
+                    double sy = (ox * up.x + oy * up.y + oz * up.z) / depth;
+                    if (Math.abs(sx) <= tanX && Math.abs(sy) <= tanY) {
+                        found.add(cursor.immutable());
+                    }
+                }
+            }
+        }
+
+        ClientPlayNetworking.send(new SourceToggleVisiblePayload((byte) 1, found));
+    }
+
+    private static void interactRemote(Minecraft mc) {
+        if (mc.player == null || mc.level == null) return;
+
+        HitResult hit = mc.player.pick(64.0D, 0.0F, false);
+        if (hit.getType() == HitResult.Type.BLOCK && hit instanceof BlockHitResult blockHit) {
+            BlockPos pos = blockHit.getBlockPos();
+            BlockState state = mc.level.getBlockState(pos);
+            if (state.getBlock() instanceof SourceBlock) {
+                SourceScreen.openNextTick(pos, state);
+                mc.player.sendOverlayMessage(Component.translatable("block.realistic-water.source.remote_opened"));
+                return;
+            }
+        }
+        mc.player.sendOverlayMessage(Component.translatable("block.realistic-water.source.remote_miss"));
+    }
+
+    public static void sources(Minecraft mc, int kind, int mode) {
+        if (mc.player != null && ClientPlayNetworking.canSend(SourceToggleAllPayload.TYPE)) {
+            ClientPlayNetworking.send(new SourceToggleAllPayload((byte) kind, (byte) mode));
+        }
+    }
+
+    public static void clearAllEmergency(Minecraft mc) {
+        if (mc.player == null) return;
+        int radius = mc.options.renderDistance().get() + 4;
+        WaterWorld world = WaterWorld.get();
+
+        for (Material m : Material.values()) {
+            world.removeAll(radius, m);
+        }
+        sources(mc, ALL_KINDS, 0);
+
+        mc.player.sendSystemMessage(Component.translatable("realistic-water.emergency.cleared"));
+    }
 }
