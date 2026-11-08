@@ -18,7 +18,6 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
-import org.lwjgl.glfw.GLFW;
 
 public final class AguaKeys {
     /** kind >= 6 significa "todos os tipos de fonte" no SourceToggleAllPayload. */
@@ -37,41 +36,41 @@ public final class AguaKeys {
         KeyMapping.Category category = KeyMapping.Category.register(RealisticWater.id("realistic_fluids"));
 
         keyCloseAll = KeyMappingHelper.registerKeyMapping(new KeyMapping(
-            "key.realistic-water.close_all_sources", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_B, category));
+            "key.realistic-water.close_all_sources", InputConstants.KEY_B, category));
 
         keyOpenVisible = KeyMappingHelper.registerKeyMapping(new KeyMapping(
-            "key.realistic-water.open_visible_sources", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_N, category));
+            "key.realistic-water.open_visible_sources", InputConstants.KEY_N, category));
 
         keyInteractRemote = KeyMappingHelper.registerKeyMapping(new KeyMapping(
-            "key.realistic-water.interact_remote", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_G, category));
+            "key.realistic-water.interact_remote", InputConstants.KEY_G, category));
 
         keyEmergencyClear = KeyMappingHelper.registerKeyMapping(new KeyMapping(
-            "key.realistic-water.emergency_clear", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_J, category));
+            "key.realistic-water.emergency_clear", InputConstants.KEY_J, category));
 
         ClientTickEvents.END_CLIENT_TICK.register(AguaKeys::tick);
     }
 
     private static void tick(Minecraft mc) {
         while (keyCloseAll.consumeClick()) {
-            if (mc.screen == null) {
+            if (mc.gui.screen() == null) {
                 sources(mc, ALL_KINDS, 0);
             }
         }
 
         while (keyOpenVisible.consumeClick()) {
-            if (mc.screen == null) {
+            if (mc.gui.screen() == null) {
                 openVisible(mc);
             }
         }
 
         while (keyInteractRemote.consumeClick()) {
-            if (mc.screen == null) {
+            if (mc.gui.screen() == null) {
                 interactRemote(mc);
             }
         }
 
         while (keyEmergencyClear.consumeClick()) {
-            if (mc.screen == null) {
+            if (mc.gui.screen() == null) {
                 clearAllEmergency(mc);
             }
         }
