@@ -71,8 +71,7 @@ public class RealisticProjectileEntity extends ThrowableItemProjectile {
                 level.sendParticles(ParticleTypes.SPLASH, center.x, center.y + 0.8, center.z, 100, 0.5, 2.0, 0.5, 0.3);
 
                 level.getEntities(this, this.getBoundingBox().inflate(3.5)).forEach(e -> {
-                    e.setDeltaMovement(e.getDeltaMovement().add(0.0, 1.25, 0.0));
-                    e.hurtMarked = true;
+                    e.push(0.0, 1.25, 0.0);
                 });
                 return;
             }
