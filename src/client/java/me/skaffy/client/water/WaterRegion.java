@@ -1208,6 +1208,9 @@ public final class WaterRegion implements AutoCloseable {
 	}
 
 	boolean whitewaterOn() {
+		if (this.material == Material.WATER && this.ocean == null && (this.tint == 2 || this.tint == 3)) {
+			return true;
+		}
 		return this.material.usesWhitewater() && (this.ocean != null ? WaterSettings.oceanWhitewater : WaterSettings.whitewater);
 	}
 
@@ -1822,8 +1825,10 @@ public final class WaterRegion implements AutoCloseable {
 			this.viscosity(cb, ubo, faceGroups, false);
 		} else if (this.material == Material.WATER && this.ocean == null && this.tint == 1) {
 			this.viscosity(cb, ubo, faceGroups, MUD_VISCOSITY, MUD_VISCOSITY_SWEEPS);
+		} else if (this.material == Material.WATER && this.ocean == null && this.tint == 4) {
+			this.viscosity(cb, ubo, faceGroups, MUD_BLOCK_VISCOSITY, MUD_BLOCK_VISCOSITY_SWEEPS);
 		} else if (this.material == Material.WATER && this.ocean == null && this.tint == 2) {
-			this.viscosity(cb, ubo, faceGroups, MILK_VISCOSITY, 3);
+			this.viscosity(cb, ubo, faceGroups, MILK_VISCOSITY, MILK_VISCOSITY_SWEEPS);
 		} else if (this.material == Material.WATER && this.floodViscous) {
 			this.viscosity(cb, ubo, faceGroups, true);
 		}
@@ -2001,9 +2006,15 @@ public final class WaterRegion implements AutoCloseable {
 	private static final float FLOOD_VISCOSITY = 6.0F;
 	private static final int FLOOD_VISCOSITY_SWEEPS = 6;
 
-	private static final float MUD_VISCOSITY = 12.0F;
-	private static final int MUD_VISCOSITY_SWEEPS = 8;
+	/** Lama do balde e do source: um pouco menos espessa que o bloco de lama (valores do bloco abaixo). */
+	private static final float MUD_VISCOSITY = 8.0F;
+	/** Espessura do Bloco de Lama (tipo 4): cubo gelatinoso das imagens de referencia. */
+	private static final float MUD_BLOCK_VISCOSITY = 12.0F;
+	private static final int MUD_BLOCK_VISCOSITY_SWEEPS = 8;
+	/** Leite grosso: forma monte e escorre devagar (ajuste aqui: maior = mais espesso). */
 	private static final float MILK_VISCOSITY = 1.2F;
+	private static final int MILK_VISCOSITY_SWEEPS = 3;
+	private static final int MUD_VISCOSITY_SWEEPS = 6;
 
 	private void viscosity(VkCommandBuffer cb, Desc ubo, int faceGroups, boolean flood) {
 		this.viscosity(cb, ubo, faceGroups, flood ? FLOOD_VISCOSITY : WaterSettings.slimeViscosity,

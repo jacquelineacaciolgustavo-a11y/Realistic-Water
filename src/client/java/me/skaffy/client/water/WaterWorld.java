@@ -403,6 +403,11 @@ public final class WaterWorld {
 		return RealisticWaterFluid.kindOf(state);
 	}
 
+	/** O bloco de lama (tipo 4) tem a mesma aparencia da lama (tipo 1); so a fisica muda. */
+	private static int lookTint(int tint) {
+		return tint == 4 ? 1 : tint;
+	}
+
 	private @Nullable WaterRegion regionNear(BlockPos pos, int margin, Material material) {
 		return this.regionNear(pos, margin, material, 0);
 	}
@@ -2299,18 +2304,22 @@ public final class WaterWorld {
 		putInts(b, o + 32, r.fluidCapacity, r.wwCapacity, entityCount, this.frameCounter);
 		int sourceCount = sand ? 0 : this.writeSources(r, b, o + 2112);
 		boolean whitewater = r.ocean != null ? WaterSettings.oceanWhitewater : WaterSettings.whitewater;
-		putInts(b, o + 48, r.material.usesWhitewater() && whitewater ? 1 : 0, sourceCount, !sand && this.localPlayerFirst ? 1 : 0,
+		putInts(b, o + 48, r.material.usesWhitewater() && (whitewater || (r.tint == 2 || r.tint == 3) && r.ocean == null) ? 1 : 0, sourceCount, !sand && this.localPlayerFirst ? 1 : 0,
 			WaterSettings.wwCellLimit);
-		boolean mud = r.material == Material.WATER && r.ocean == null && r.tint == 1;
+		boolean mud = r.material == Material.WATER && r.ocean == null && (r.tint == 1 || r.tint == 4);
+		boolean viscous = slime || mud;
 		float gravityScale = mud ? 0.4F : 1.0F;
 		putFloats(b, o + 64, 0.0F, -WaterSettings.gravity * gravityScale * res, 0.0F, dt);
 		float flipRatio = r.ocean != null ? WaterSettings.oceanFlipRatio : lava ? WaterSettings.lavaFlipRatio : slime || mud ? WaterSettings.slimeFlipRatio
 			: WaterSettings.flipRatio;
 		float flip = (float) Math.pow(flipRatio, dt * 60.0F);
-		putFloats(b, o + 80, flip, PARTICLES_PER_CELL, slime ? WaterSettings.slimeVolumeCorrection : WaterSettings.volumeCorrection, 0.0F);
+		putFloats(b, o + 80, flip, PARTICLES_PER_CELL, viscous ? WaterSettings.slimeVolumeCorrection : WaterSettings.volumeCorrection, 0.0F);
 		float maxSpeed = (lava ? WaterSettings.lavaMaxSpeed : slime ? WaterSettings.slimeMaxSpeed : leaves ? WaterSettings.leafMaxSpeed : mud ? WaterSettings.maxSpeed * 0.5F : WaterSettings.maxSpeed) * res;
 		putFloats(b, o + 96, maxSpeed, h, this.simTime, 0.0F);
-		putFloats(b, o + 112, WaterSettings.wwTrappedAirRate, WaterSettings.wwWaveCrestRate, WaterSettings.wwEnergyMin, WaterSettings.wwEnergyMax);
+		float airBoost = r.material == Material.WATER && r.ocean == null && r.tint == 3 ? 2.5F : 1.0F;
+		float crestBoost = r.material == Material.WATER && r.ocean == null && r.tint == 2 ? 2.0F : 1.0F;
+		float softFoam = r.material == Material.WATER && r.ocean == null && (r.tint == 2 || r.tint == 3) ? MILK_COLA_FOAM_SCALE : 1.0F;
+		putFloats(b, o + 112, WaterSettings.wwTrappedAirRate * airBoost * softFoam, WaterSettings.wwWaveCrestRate * crestBoost * softFoam, WaterSettings.wwEnergyMin, WaterSettings.wwEnergyMax);
 		putFloats(b, o + 128, WaterSettings.wwTrappedAirMin, WaterSettings.wwTrappedAirMax, WaterSettings.wwWaveCrestMin, WaterSettings.wwWaveCrestMax);
 		putFloats(b, o + 144, WaterSettings.wwFoamLifeMin, WaterSettings.wwFoamLifeMax, WaterSettings.wwBubbleBuoyancy, WaterSettings.wwBubbleDrag);
 		putFloats(b, o + 160, WaterSettings.wwSprayDrag, WaterSettings.wwSprayThreshold, WaterSettings.wwBubbleThreshold, WaterSettings.wwMaxPerParticle);
@@ -2359,15 +2368,17 @@ public final class WaterWorld {
 			float impactViscosity = WaterSettings.sandImpactDamping * 0.25F / Math.max(dt, 1e-5F);
 			putFloats(b, o + 3872, WaterSettings.sandWallFriction, 1.0F / PARTICLES_PER_CELL, impactViscosity, WaterSettings.sandImpactRate);
 		} else {
-			float filmFriction = lava ? WaterSettings.lavaFilmFriction : slime ? WaterSettings.slimeFilmFriction : WaterSettings.filmFriction;
-			float strandedTime = lava ? WaterSettings.lavaStrandedTime : slime ? WaterSettings.slimeStrandedTime : WaterSettings.strandedTime;
-			int strandedNeighbors = lava ? WaterSettings.lavaStrandedNeighbors : slime ? WaterSettings.slimeStrandedNeighbors : WaterSettings.strandedNeighbors;
-			float filmDepth = (lava ? WaterSettings.lavaFilmDepth : slime ? WaterSettings.slimeFilmDepth : WaterSettings.filmDepth) * res;
-			float adhesion = slime ? WaterSettings.slimeAdhesion : 0.0F;
+			float filmFriction = lava ? WaterSettings.lavaFilmFriction : viscous ? WaterSettings.slimeFilmFriction
+				: r.floodViscous ? FLOOD_FILM_FRICTION : WaterSettings.filmFriction;
+			float strandedTime = lava ? WaterSettings.lavaStrandedTime : viscous ? WaterSettings.slimeStrandedTime : WaterSettings.strandedTime;
+			int strandedNeighbors = lava ? WaterSettings.lavaStrandedNeighbors : viscous ? WaterSettings.slimeStrandedNeighbors : WaterSettings.strandedNeighbors;
+			float filmDepth = (lava ? WaterSettings.lavaFilmDepth : viscous ? WaterSettings.slimeFilmDepth
+			: r.floodViscous ? FLOOD_FILM_DEPTH : WaterSettings.filmDepth) * res;
+			float adhesion = viscous ? WaterSettings.slimeAdhesion * (mud ? 0.6F : 1.0F) : 0.0F;
 			float entityStick = slime ? Mth.clamp(WaterSettings.slimeEntityStick, 0.0F, 1.0F) : 0.0F;
-			putFloats(b, o + 3840, r.material.shaderId() + (r.material == Material.WATER && r.ocean == null ? r.tint * 0.05F : 0.0F), adhesion, entityStick, 1.0F);
+			putFloats(b, o + 3840, r.material.shaderId() + (r.material == Material.WATER && r.ocean == null ? lookTint(r.tint) * 0.05F : 0.0F), adhesion, entityStick, 1.0F);
 			putFloats(b, o + 3856, filmFriction, strandedTime, strandedNeighbors, filmDepth);
-			if (slime) {
+			if (viscous) {
 				putFloats(b, o + 3872, WaterSettings.slimeRestSpeed * res, WaterSettings.slimeRestTime, WaterSettings.slimeWakeSpeed * res, 0.0F);
 			} else {
 				putFloats(b, o + 3872, 0.0F, 0.0F, 0.0F, 0.0F);
@@ -2378,7 +2389,7 @@ public final class WaterWorld {
 			putFloats(b, o + 3888, inside ? 1.0F : 0.0F, WaterSettings.slimeBrightness, WaterSettings.slimeInsideOpacity, WaterSettings.slimeOpacity);
 		} else {
 			// matD.w (so na agua): qual liquido enche o olho da camera, pro shader pintar a visao de dentro.
-			float cameraTint = r.material == Material.WATER ? tintOf(level.getBlockState(BlockPos.containing(cam))) : 0.0F;
+			float cameraTint = r.material == Material.WATER ? lookTint(tintOf(level.getBlockState(BlockPos.containing(cam)))) : 0.0F;
 			float grainBrightness = r.material == Material.SNOW ? WaterSettings.sandBrightness * 1.15F : WaterSettings.sandBrightness;
 			putFloats(b, o + 3888, WaterSettings.sandGrainMinPixels, grainBrightness, WaterSettings.sandGrainSpread, cameraTint);
 		}
@@ -2760,6 +2771,11 @@ public final class WaterWorld {
 	/** Taxa de emissao e reforco de velocidade dos jatos do modo alagamento (ajuste aqui se quiser mais/menos agua). */
 	private static final float FLOOD_RATE = 12.0F;
 	private static final float FLOOD_SPEED_BOOST = 1.5F;
+	/** Grude da agua no chao so no modo alagamento (a agua normal escorre bem mais solta). */
+	/** Leite e coca mantem a quantidade de espuma antiga (so a agua ganhou mais espuma). */
+	private static final float MILK_COLA_FOAM_SCALE = 20.0F / 45.0F;
+	private static final float FLOOD_FILM_FRICTION = 120.0F;
+	private static final float FLOOD_FILM_DEPTH = 0.20F;
 
 	private boolean paddleNear(ClientLevel level, WaterRegion r) {
 		if (!r.hasWindow || r.material != Material.WATER) {

@@ -78,7 +78,7 @@ public class AguaConfigScreen extends OptionsSubScreen {
 			put("foamSize", "3.0");
 			put("foamBubbleSize", "0.05");
 			put("bubbleAlpha", "0.5");
-			put("wwBubbleThreshold", "14.0");
+			put("wwBubbleThreshold", "10.0");
 			put("wwBubbleBuoyancy", "3.0");
 			put("wwBubbleDrag", "1.0");
 		} else {
@@ -93,7 +93,7 @@ public class AguaConfigScreen extends OptionsSubScreen {
 		if (on) {
 			enableWhitewaterBase();
 			put("sprayAlpha", "0.7");
-			put("wwSprayThreshold", "6.0");
+			put("wwSprayThreshold", "4.0");
 			put("wwSprayDrag", "0.3");
 		} else {
 			put("sprayAlpha", "0.0");
@@ -103,12 +103,12 @@ public class AguaConfigScreen extends OptionsSubScreen {
 
 	/** Parametros de geracao compartilhados por espuma e respingos. */
 	private static void enableWhitewaterBase() {
-		put("wwTrappedAirRate", "20.0");
-		put("wwWaveCrestRate", "20.0");
+		put("wwTrappedAirRate", "45.0");
+		put("wwWaveCrestRate", "45.0");
 		put("wwFoamLifeMin", "1.0");
 		put("wwFoamLifeMax", "3.0");
-		put("wwMaxPerParticle", "2");
-		put("wwCellLimit", "20");
+		put("wwMaxPerParticle", "3");
+		put("wwCellLimit", "30");
 		put("wwRadius", "0.02");
 		put("wwMaxPixels", "6.0");
 	}

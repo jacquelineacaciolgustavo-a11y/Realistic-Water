@@ -30,7 +30,7 @@ import net.minecraft.world.level.material.FluidState;
 import org.jspecify.annotations.Nullable;
 
 public abstract class RealisticWaterFluid extends FlowingFluid {
-	/** 0 = agua, 1 = lama, 2 = leite, 3 = coca-cola. */
+	/** 0 = agua, 1 = lama, 2 = leite, 3 = coca-cola, 4 = bloco de lama (lama espessa). */
 	protected final int kind;
 
 	protected RealisticWaterFluid(int kind) {
@@ -47,6 +47,7 @@ public abstract class RealisticWaterFluid extends FlowingFluid {
 			case 1 -> ModContent.FLOWING_REALISTIC_MUD;
 			case 2 -> ModContent.FLOWING_REALISTIC_MILK;
 			case 3 -> ModContent.FLOWING_REALISTIC_COLA;
+			case 4 -> ModContent.FLOWING_REALISTIC_THICK_MUD;
 			default -> ModContent.FLOWING_REALISTIC_WATER;
 		};
 	}
@@ -57,6 +58,7 @@ public abstract class RealisticWaterFluid extends FlowingFluid {
 			case 1 -> ModContent.REALISTIC_MUD;
 			case 2 -> ModContent.REALISTIC_MILK;
 			case 3 -> ModContent.REALISTIC_COLA;
+			case 4 -> ModContent.REALISTIC_THICK_MUD;
 			default -> ModContent.REALISTIC_WATER;
 		};
 	}
@@ -67,6 +69,7 @@ public abstract class RealisticWaterFluid extends FlowingFluid {
 			case 1 -> ModContent.REALISTIC_MUD_BUCKET;
 			case 2 -> ModContent.REALISTIC_MILK_BUCKET;
 			case 3 -> ModContent.REALISTIC_COLA_BUCKET;
+			case 4 -> ModContent.REALISTIC_MUD_BUCKET;
 			default -> ModContent.REALISTIC_WATER_BUCKET;
 		};
 	}
@@ -76,11 +79,12 @@ public abstract class RealisticWaterFluid extends FlowingFluid {
 			case 1 -> ModContent.REALISTIC_MUD_BLOCK;
 			case 2 -> ModContent.REALISTIC_MILK_BLOCK;
 			case 3 -> ModContent.REALISTIC_COLA_BLOCK;
+			case 4 -> ModContent.REALISTIC_THICK_MUD_BLOCK;
 			default -> ModContent.REALISTIC_WATER_BLOCK;
 		};
 	}
 
-	/** Qual liquido (0 agua, 1 lama, 2 leite, 3 coca) este bloco guarda. */
+	/** Qual liquido (0 agua, 1 lama, 2 leite, 3 coca, 4 bloco de lama) este bloco guarda. */
 	public static int kindOf(BlockState state) {
 		Block block = state.getBlock();
 		if (block == ModContent.REALISTIC_MUD_BLOCK) {
@@ -88,6 +92,9 @@ public abstract class RealisticWaterFluid extends FlowingFluid {
 		}
 		if (block == ModContent.REALISTIC_MILK_BLOCK) {
 			return 2;
+		}
+		if (block == ModContent.REALISTIC_THICK_MUD_BLOCK) {
+			return 4;
 		}
 		return block == ModContent.REALISTIC_COLA_BLOCK ? 3 : 0;
 	}

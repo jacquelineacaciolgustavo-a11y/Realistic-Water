@@ -103,6 +103,14 @@ bool isSlime() {
     return abs(G.matA.x - 3.0) < 0.5;
 }
 
+bool isMud() {
+    return G.matA.x > 0.02 && G.matA.x < 0.08;
+}
+
+bool isViscous() {
+    return isSlime() || isMud();
+}
+
 bool isLeaves() {
     return abs(G.matA.x - 4.0) < 0.5;
 }

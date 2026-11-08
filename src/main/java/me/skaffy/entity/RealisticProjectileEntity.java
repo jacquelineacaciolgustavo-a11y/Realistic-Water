@@ -1,6 +1,9 @@
 package me.skaffy.entity;
 
 import me.skaffy.ModContent;
+import me.skaffy.net.LavaSyncPayload;
+import me.skaffy.net.WaterSyncPayload;
+import me.skaffy.portal.PortalTransit;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.particles.BlockParticleOption;
@@ -8,6 +11,7 @@ import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.attribute.EnvironmentAttributes;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.projectile.throwableitemprojectile.ThrowableItemProjectile;
@@ -38,6 +42,8 @@ public class RealisticProjectileEntity extends ThrowableItemProjectile {
         return switch (this.kind) {
             case 1 -> ModContent.REALISTIC_SLIME_BALL;
             case 2 -> ModContent.REALISTIC_HONEY_BALL;
+            case 3 -> ModContent.REALISTIC_WATER_BALL;
+            case 4 -> ModContent.REALISTIC_LAVA_BALL;
             default -> ModContent.REALISTIC_SNOWBALL;
         };
     }
@@ -46,10 +52,48 @@ public class RealisticProjectileEntity extends ThrowableItemProjectile {
     protected void onHit(HitResult hitResult) {
         super.onHit(hitResult);
         if (!this.level().isClientSide()) {
-            if (hitResult instanceof BlockHitResult blockHit) {
+            if (this.kind >= 3) {
+                this.splashFluid(hitResult);
+            } else if (hitResult instanceof BlockHitResult blockHit) {
                 this.handleBlockHit(blockHit);
             }
             this.discard();
+        }
+    }
+
+    /** Bola de agua (kind 3) e bola de lava (kind 4): ao bater, viram 1 bloco finito do liquido realista. */
+    private void splashFluid(HitResult hit) {
+        ServerLevel level = (ServerLevel) this.level();
+        boolean lava = this.kind == 4;
+        Vec3 at = hit.getLocation();
+        BlockPos target;
+        if (hit instanceof BlockHitResult blockHit) {
+            BlockPos pos = blockHit.getBlockPos();
+            BlockState hitState = level.getBlockState(pos);
+            target = hitState.canBeReplaced() && !hitState.liquid() ? pos : pos.relative(blockHit.getDirection());
+        } else {
+            target = BlockPos.containing(at);
+        }
+        BlockState current = level.getBlockState(target);
+        if (!(current.isAir() || current.canBeReplaced() && !current.liquid())) {
+            level.playSound(null, at.x, at.y, at.z, SoundEvents.FIRE_EXTINGUISH, SoundSource.BLOCKS, 0.4F, 1.6F);
+            return;
+        }
+        if (!lava && level.environmentAttributes().getValue(EnvironmentAttributes.WATER_EVAPORATES, target)) {
+            level.playSound(null, at.x, at.y, at.z, SoundEvents.FIRE_EXTINGUISH, SoundSource.BLOCKS, 0.5F, 2.6F);
+            PortalTransit.steamBurst(level, new Vec3(target.getX() + 0.5, target.getY() + 0.1, target.getZ() + 0.5), 8.0F);
+            return;
+        }
+        if (!current.isAir()) {
+            level.destroyBlock(target, true);
+        }
+        level.setBlock(target, lava ? LavaSyncPayload.stateFor(8) : WaterSyncPayload.stateFor(8), 11);
+        if (lava) {
+            level.playSound(null, at.x, at.y, at.z, SoundEvents.BUCKET_EMPTY_LAVA, SoundSource.BLOCKS, 1.0F, 1.0F);
+            level.sendParticles(ParticleTypes.LAVA, at.x, at.y + 0.1, at.z, 12, 0.2, 0.1, 0.2, 0.1);
+        } else {
+            level.playSound(null, at.x, at.y, at.z, SoundEvents.BUCKET_EMPTY, SoundSource.BLOCKS, 1.0F, 1.2F);
+            level.sendParticles(ParticleTypes.SPLASH, at.x, at.y + 0.1, at.z, 20, 0.25, 0.1, 0.25, 0.2);
         }
     }
 

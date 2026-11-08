@@ -491,10 +491,10 @@ void main() {
                 return;
             }
         }
-        bool squeezed = isSlime() && float(countAt(ivec3(floor(x)))) > G.simA.y * 1.5;
-        if (isSlime() && squeezed) {
+        bool squeezed = isViscous() && float(countAt(ivec3(floor(x)))) > G.simA.y * 1.5;
+        if (isViscous() && squeezed) {
             rest = 0.0;
-        } else if (isSlime()) {
+        } else if (isViscous()) {
             slimeAdhere(x, v, dx);
             rest = p.vel.w;
             bool frozen = rest >= G.matC.y;

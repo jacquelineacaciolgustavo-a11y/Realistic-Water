@@ -42,6 +42,12 @@ void main() {
     } else {
         a *= 0.9 * clamp(vData.x * 0.8, 0.0, 1.0) * exp(-2.5 * r2);
     }
+    float liquidId = floor(G.matA.x / 0.05 + 0.5);
+    if (liquidId > 1.5 && liquidId < 2.5) {
+        color = mix(color, vec3(0.97), 0.85);
+    } else if (liquidId > 2.5 && liquidId < 3.5) {
+        color = mix(color, vec3(0.88, 0.72, 0.52), 0.85);
+    }
     if (type < 2.5) {
         vec3 n = vec3(vUV.x, vUV.y, sqrt(max(1.0 - r2, 0.0)));
         vec3 L = G.sunDir.w > 0.0 ? normalize(G.sunDir.xyz) : normalize(mat3(G.view) * vec3(0.0, 1.0, 0.0));

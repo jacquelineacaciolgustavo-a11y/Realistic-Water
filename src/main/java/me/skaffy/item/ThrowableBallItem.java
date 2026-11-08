@@ -27,7 +27,7 @@ public class ThrowableBallItem extends Item {
     public InteractionResult use(Level level, Player player, InteractionHand hand) {
         ItemStack stack = player.getItemInHand(hand);
         level.playSound(null, player.getX(), player.getY(), player.getZ(),
-            this.kind == 0 ? SoundEvents.SNOWBALL_THROW : SoundEvents.SLIME_BLOCK_PLACE,
+            this.kind == 0 || this.kind >= 3 ? SoundEvents.SNOWBALL_THROW : SoundEvents.SLIME_BLOCK_PLACE,
             SoundSource.NEUTRAL, 0.5F, 0.4F / (level.getRandom().nextFloat() * 0.4F + 0.8F));
 
         if (!level.isClientSide()) {

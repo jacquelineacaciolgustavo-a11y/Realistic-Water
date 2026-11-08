@@ -169,6 +169,7 @@ public class RealisticWaterClient implements ClientModInitializer {
             BlockTintSources.constant(0xEE3C2718)
         );
         FluidRenderingRegistry.register(ModContent.REALISTIC_MUD, ModContent.FLOWING_REALISTIC_MUD, mudModel, invisible);
+        FluidRenderingRegistry.register(ModContent.REALISTIC_THICK_MUD, ModContent.FLOWING_REALISTIC_THICK_MUD, mudModel, invisible);
 
         FluidModel.Unbaked milkModel = new FluidModel.Unbaked(
             new Material(Identifier.withDefaultNamespace("block/water_still")),

@@ -117,6 +117,17 @@ public final class ModContent {
     public static final Item REALISTIC_MUD_BUCKET = Registry.register(BuiltInRegistries.ITEM, REALISTIC_MUD_BUCKET_KEY, new FiniteBucketItem(
         REALISTIC_MUD, amount -> ModContent.REALISTIC_MUD_BLOCK.defaultBlockState(), new Item.Properties().craftRemainder(Items.BUCKET).stacksTo(1).setId(REALISTIC_MUD_BUCKET_KEY)));
 
+    /** Bloco de Lama: lama mais espessa (tipo 4), forma um cubo gelatinoso. O balde e o source usam a lama normal (tipo 1). */
+    public static final FlowingFluid FLOWING_REALISTIC_THICK_MUD = Registry.register(
+        BuiltInRegistries.FLUID, RealisticWater.id("flowing_realistic_thick_mud"), new RealisticWaterFluid.Flowing(4));
+    public static final FlowingFluid REALISTIC_THICK_MUD = Registry.register(
+        BuiltInRegistries.FLUID, RealisticWater.id("realistic_thick_mud"), new RealisticWaterFluid.Source(4));
+    public static final ResourceKey<Block> REALISTIC_THICK_MUD_BLOCK_KEY = ResourceKey.create(Registries.BLOCK, RealisticWater.id("realistic_thick_mud"));
+    public static final Block REALISTIC_THICK_MUD_BLOCK = Registry.register(BuiltInRegistries.BLOCK, REALISTIC_THICK_MUD_BLOCK_KEY, new RealisticWaterBlock(
+        REALISTIC_THICK_MUD, BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_BROWN).replaceable().noCollision().strength(100.0F).pushReaction(PushReaction.POPPED).noLootTable().liquid().sound(SoundType.MUD).setId(REALISTIC_THICK_MUD_BLOCK_KEY)));
+    public static final ResourceKey<Item> REALISTIC_MUD_CUBE_KEY = ResourceKey.create(Registries.ITEM, RealisticWater.id("realistic_mud_cube"));
+    public static final Item REALISTIC_MUD_CUBE = registerBlockItem(REALISTIC_MUD_CUBE_KEY, REALISTIC_THICK_MUD_BLOCK);
+
     public static final FlowingFluid FLOWING_REALISTIC_MILK = Registry.register(
         BuiltInRegistries.FLUID, RealisticWater.id("flowing_realistic_milk"), new RealisticWaterFluid.Flowing(2));
     public static final FlowingFluid REALISTIC_MILK = Registry.register(
@@ -210,6 +221,12 @@ public final class ModContent {
     public static final ResourceKey<Item> REALISTIC_HONEY_BALL_KEY = ResourceKey.create(Registries.ITEM, RealisticWater.id("realistic_honey_ball"));
     public static final Item REALISTIC_HONEY_BALL = Registry.register(BuiltInRegistries.ITEM, REALISTIC_HONEY_BALL_KEY, new ThrowableBallItem(2, new Item.Properties().stacksTo(16).setId(REALISTIC_HONEY_BALL_KEY)));
 
+    public static final ResourceKey<Item> REALISTIC_WATER_BALL_KEY = ResourceKey.create(Registries.ITEM, RealisticWater.id("realistic_water_ball"));
+    public static final Item REALISTIC_WATER_BALL = Registry.register(BuiltInRegistries.ITEM, REALISTIC_WATER_BALL_KEY, new ThrowableBallItem(3, new Item.Properties().stacksTo(16).setId(REALISTIC_WATER_BALL_KEY)));
+
+    public static final ResourceKey<Item> REALISTIC_LAVA_BALL_KEY = ResourceKey.create(Registries.ITEM, RealisticWater.id("realistic_lava_ball"));
+    public static final Item REALISTIC_LAVA_BALL = Registry.register(BuiltInRegistries.ITEM, REALISTIC_LAVA_BALL_KEY, new ThrowableBallItem(4, new Item.Properties().stacksTo(16).setId(REALISTIC_LAVA_BALL_KEY)));
+
     public static final ResourceKey<EntityType<?>> REALISTIC_PROJECTILE_KEY = ResourceKey.create(Registries.ENTITY_TYPE, RealisticWater.id("realistic_projectile"));
     public static final EntityType<RealisticProjectileEntity> REALISTIC_PROJECTILE = Registry.register(BuiltInRegistries.ENTITY_TYPE, REALISTIC_PROJECTILE_KEY,
         EntityType.Builder.<RealisticProjectileEntity>of(RealisticProjectileEntity::new, MobCategory.MISC).sized(0.25F, 0.25F).clientTrackingRange(4).updateInterval(10).noLootTable().build(REALISTIC_PROJECTILE_KEY));
@@ -252,6 +269,7 @@ public final class ModContent {
             output.accept(REALISTIC_LAVA_BUCKET);
             output.accept(REALISTIC_SLIME_BUCKET);
             output.accept(REALISTIC_MUD_BUCKET);
+            output.accept(REALISTIC_MUD_CUBE);
             output.accept(REALISTIC_MILK_BUCKET);
             output.accept(REALISTIC_COLA_BUCKET);
 
@@ -265,6 +283,8 @@ public final class ModContent {
             output.accept(REALISTIC_SNOWBALL);
             output.accept(REALISTIC_SLIME_BALL);
             output.accept(REALISTIC_HONEY_BALL);
+            output.accept(REALISTIC_WATER_BALL);
+            output.accept(REALISTIC_LAVA_BALL);
 
             output.accept(WAVE_MAKER_ITEM);
             output.accept(CONVERTER);
