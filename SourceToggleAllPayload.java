@@ -15,7 +15,7 @@ import net.minecraft.world.level.block.state.BlockState;
 
 /**
  * Liga ou desliga todos os fontes de um fluido.
- * kind: 0 = agua, 1 = lava, 2 = slime, 3 = todos. mode: 0 = fechar, 1 = abrir, 2 = alternar.
+ * kind: 0 = agua, 1 = lava, 2 = slime, 3 = lama, 4 = leite, 5 = cola, 6 (ou mais) = todos. mode: 0 = fechar, 1 = abrir, 2 = alternar.
  */
 public record SourceToggleAllPayload(byte kind, byte mode) implements CustomPacketPayload {
 	public static final Type<SourceToggleAllPayload> TYPE = new Type<>(RealisticWater.id("source_toggle_all"));
@@ -45,7 +45,7 @@ public record SourceToggleAllPayload(byte kind, byte mode) implements CustomPack
 				SourceBlock.known(level).remove(key);
 				continue;
 			}
-			if (this.kind == 3 || source.kind() == this.kind) {
+			if (this.kind < 0 || this.kind > 5 || source.kind() == this.kind) {
 				matches.add(pos);
 				anyEnabled |= state.getValue(SourceBlock.ENABLED);
 			}
