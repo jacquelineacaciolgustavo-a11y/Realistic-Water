@@ -1,57 +1,20 @@
 {
-  "multipart": [
+  "type": "minecraft:block",
+  "pools": [
     {
-      "apply": {
-        "model": "realistic-water:block/source_water"
-      }
-    },
-    {
-      "when": {
-        "up": "true"
-      },
-      "apply": {
-        "model": "realistic-water:block/source_water_hole_up"
-      }
-    },
-    {
-      "when": {
-        "down": "true"
-      },
-      "apply": {
-        "model": "realistic-water:block/source_water_hole_down"
-      }
-    },
-    {
-      "when": {
-        "north": "true"
-      },
-      "apply": {
-        "model": "realistic-water:block/source_water_hole_north"
-      }
-    },
-    {
-      "when": {
-        "south": "true"
-      },
-      "apply": {
-        "model": "realistic-water:block/source_water_hole_south"
-      }
-    },
-    {
-      "when": {
-        "west": "true"
-      },
-      "apply": {
-        "model": "realistic-water:block/source_water_hole_west"
-      }
-    },
-    {
-      "when": {
-        "east": "true"
-      },
-      "apply": {
-        "model": "realistic-water:block/source_water_hole_east"
-      }
+      "rolls": 1,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "realistic-water:source_water"
+        }
+      ],
+      "conditions": [
+        {
+          "condition": "minecraft:survives_explosion"
+        }
+      ]
     }
-  ]
+  ],
+  "random_sequence": "realistic-water:blocks/source_water"
 }
