@@ -1,4 +1,4 @@
-﻿package me.skaffy.client.water;
+package me.skaffy.client.water;
 
 import me.skaffy.ModSettings;
 import me.skaffy.RealisticWater;
