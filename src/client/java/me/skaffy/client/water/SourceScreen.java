@@ -71,7 +71,18 @@ public class SourceScreen extends OptionsSubScreen {
 		this.box = editBox;
 		this.list.addBig(editBox);
 		this.list.addBig(CycleButton.onOffBuilder(this.flood)
-			.create(Component.translatable("block.realistic-water.source.flood"), (button, on) -> this.flood = on));
+			.create(Component.translatable("block.realistic-water.source.flood"), (button, on) -> {
+				this.flood = on;
+				if (on) {
+					this.flow = 10;
+					if (this.slider != null) {
+						this.slider.setFlow(10);
+					}
+					if (this.box != null) {
+						this.box.setValue("1000");
+					}
+				}
+			}));
 		this.list.addBig(CycleButton.onOffBuilder(this.all)
 			.create(Component.translatable("block.realistic-water.source.all"), (button, on) -> this.all = on));
 	}

@@ -32,7 +32,7 @@ public final class WaterRenderer implements AutoCloseable {
 	private final ComputeProgram dropletCull;
 	private final Sampler nearest = new Sampler(false);
 	private final Sampler linear = new Sampler(true);
-	private final VkBuf slimeTexture = SandRenderer.loadTexture(SLIME_TEXTURE, 0xFF7EBF6E);
+	private final VkBuf slimeTexture = SandRenderer.loadTexture(SLIME_TEXTURE, 0xFFA3B39C);
 
 	private int width;
 	private int height;

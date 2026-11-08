@@ -24,8 +24,6 @@ public record SourceConfigPayload(int x, int y, int z, int flow, boolean flood, 
 		ByteBufCodecs.BOOL, SourceConfigPayload::all,
 		SourceConfigPayload::new);
 
-	private static final int ALL_RADIUS = 16;
-
 	@Override
 	public Type<SourceConfigPayload> type() {
 		return TYPE;
@@ -41,19 +39,19 @@ public record SourceConfigPayload(int x, int y, int z, int flow, boolean flood, 
 		if (!(state.getBlock() instanceof SourceBlock)) {
 			return;
 		}
-		int amount = Mth.clamp(this.flow, 0, 10);
+		int amount = this.flood ? 10 : Mth.clamp(this.flow, 0, 10);
 		set(level, pos, state, amount, this.flood);
 		if (this.all) {
-			BlockPos.MutableBlockPos p = new BlockPos.MutableBlockPos();
-			for (int dx = -ALL_RADIUS; dx <= ALL_RADIUS; dx++) {
-				for (int dy = -ALL_RADIUS; dy <= ALL_RADIUS; dy++) {
-					for (int dz = -ALL_RADIUS; dz <= ALL_RADIUS; dz++) {
-						p.set(pos.getX() + dx, pos.getY() + dy, pos.getZ() + dz);
-						BlockState other = level.getBlockState(p);
-						if (other.is(state.getBlock())) {
-							set(level, p.immutable(), other, amount, this.flood);
-						}
-					}
+			for (Long key : new java.util.ArrayList<>(SourceBlock.known(level))) {
+				BlockPos other = BlockPos.of(key);
+				if (!level.isLoaded(other)) {
+					continue;
+				}
+				BlockState otherState = level.getBlockState(other);
+				if (otherState.getBlock() instanceof SourceBlock) {
+					set(level, other, otherState, amount, this.flood);
+				} else {
+					SourceBlock.known(level).remove(key);
 				}
 			}
 		}

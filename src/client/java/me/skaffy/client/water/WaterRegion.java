@@ -1817,7 +1817,9 @@ public final class WaterRegion implements AutoCloseable {
 		Vk.barrier(cb);
 
 		if (this.material == Material.SLIME && WaterSettings.slimeViscosity > 0.0F && WaterSettings.slimeViscosityIterations > 0) {
-			this.viscosity(cb, ubo, faceGroups);
+			this.viscosity(cb, ubo, faceGroups, false);
+		} else if (this.material == Material.WATER && this.floodViscous) {
+			this.viscosity(cb, ubo, faceGroups, true);
 		}
 
 		p[6].bind(cb, ubo, Desc.ssbo(this.vel), Desc.ssbo(this.cellFlags), Desc.ssbo(this.cellDens), Desc.ssbo(this.divergence),
@@ -1988,10 +1990,15 @@ public final class WaterRegion implements AutoCloseable {
 		}
 	}
 
-	private void viscosity(VkCommandBuffer cb, Desc ubo, int faceGroups) {
+	/** Marcado pelo WaterWorld quando um fonte em modo alagamento esta ativo nesta regiao: deixa a agua gelatinosa. */
+	boolean floodViscous;
+	private static final float FLOOD_VISCOSITY = 6.0F;
+	private static final int FLOOD_VISCOSITY_SWEEPS = 6;
+
+	private void viscosity(VkCommandBuffer cb, Desc ubo, int faceGroups, boolean flood) {
 		ComputeProgram visc = programs()[23];
-		int sweeps = Math.max(2, WaterSettings.slimeViscosityIterations);
-		float nu = WaterSettings.slimeViscosity * this.res * this.res;
+		int sweeps = flood ? FLOOD_VISCOSITY_SWEEPS : Math.max(2, WaterSettings.slimeViscosityIterations);
+		float nu = (flood ? FLOOD_VISCOSITY : WaterSettings.slimeViscosity) * this.res * this.res;
 		for (int k = 0; k < sweeps; k++) {
 			int src = k == 0 ? -1 : ((k - 1) % 2) * this.numFaces;
 			int dst = k == sweeps - 1 ? -1 : (k % 2) * this.numFaces;

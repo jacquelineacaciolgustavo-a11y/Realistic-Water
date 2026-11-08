@@ -1,7 +1,6 @@
 {
-  "parent": "minecraft:block/cube_column",
+  "parent": "minecraft:block/cube_all",
   "textures": {
-    "end": "realistic-water:block/source_slime_top",
-    "side": "realistic-water:block/source_slime_side"
+    "all": "realistic-water:block/source_slime_side"
   }
 }

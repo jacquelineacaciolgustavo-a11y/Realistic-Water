@@ -1,7 +1,9 @@
 package me.skaffy.fluid;
 
 import me.skaffy.ModSettings;
+import me.skaffy.block.HotObsidianBlock;
 import me.skaffy.block.RealisticWaterBlock;
+import net.minecraft.world.level.BlockGetter;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
@@ -71,7 +73,7 @@ public final class FluidMixing {
 	}
 
 	private static void solidify(ServerLevel level, BlockPos pos, BlockState state) {
-		level.setBlock(pos, resultFor(state).defaultBlockState(), Block.UPDATE_ALL);
+		level.setBlock(pos, resultStateFor(level, pos, state), Block.UPDATE_ALL);
 		level.levelEvent(LevelEvent.LAVA_FIZZ, pos, 0);
 	}
 
@@ -82,5 +84,26 @@ public final class FluidMixing {
 		}
 		boolean source = RealisticLavaFluid.isRealistic(fluid) ? RealisticWaterBlock.isInfinite(state) : fluid.isSource();
 		return source ? Blocks.OBSIDIAN : Blocks.COBBLESTONE;
+	}
+
+	/**
+	 * O que sobra quando lava e agua se encontram neste lugar:
+	 * - agua num espaco com teto: nao cresce nada, so some o fluido;
+	 * - lava realista: obsidiana quente em camadas;
+	 * - agua ou ar: uma camada fina de obsidiana quente.
+	 */
+	public static BlockState resultStateFor(BlockGetter level, BlockPos pos, BlockState state) {
+		FluidState fluid = state.getFluidState();
+		if (fluid.is(FluidTags.WATER) && HotObsidianBlock.hasCeiling(level, pos)) {
+			return Blocks.AIR.defaultBlockState();
+		}
+		if (fluid.is(FluidTags.LAVA)) {
+			if (!RealisticLavaFluid.isRealistic(fluid)) {
+				return resultFor(state).defaultBlockState();
+			}
+			boolean source = RealisticWaterBlock.isInfinite(state);
+			return HotObsidianBlock.hot(source ? 4 : 2);
+		}
+		return HotObsidianBlock.hot(1);
 	}
 }
