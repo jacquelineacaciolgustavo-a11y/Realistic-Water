@@ -18,7 +18,11 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.LiquidBlock;
 import net.minecraft.world.level.block.state.BlockState;
 
-public record WaterSyncPayload(long[] positions, byte[] amounts) implements CustomPacketPayload {
+public record WaterSyncPayload(long[] positions, byte[] amounts, byte tint) implements CustomPacketPayload {
+	public WaterSyncPayload(long[] positions, byte[] amounts) {
+		this(positions, amounts, (byte) 0);
+	}
+
 	public static final Type<WaterSyncPayload> TYPE = new Type<>(RealisticWater.id("water_sync"));
 	public static final StreamCodec<RegistryFriendlyByteBuf, WaterSyncPayload> CODEC = StreamCodec.of(WaterSyncPayload::write, WaterSyncPayload::read);
 	public static final int MAX_ENTRIES = 32768;
@@ -29,6 +33,7 @@ public record WaterSyncPayload(long[] positions, byte[] amounts) implements Cust
 			buf.writeLong(payload.positions[i]);
 			buf.writeByte(payload.amounts[i]);
 		}
+		buf.writeByte(payload.tint);
 	}
 
 	private static WaterSyncPayload read(RegistryFriendlyByteBuf buf) {
@@ -39,7 +44,7 @@ public record WaterSyncPayload(long[] positions, byte[] amounts) implements Cust
 			positions[i] = buf.readLong();
 			amounts[i] = buf.readByte();
 		}
-		return new WaterSyncPayload(positions, amounts);
+		return new WaterSyncPayload(positions, amounts, buf.readByte());
 	}
 
 	@Override
@@ -48,17 +53,25 @@ public record WaterSyncPayload(long[] positions, byte[] amounts) implements Cust
 	}
 
 	public static BlockState stateFor(int amount) {
-		BlockState full = ModContent.REALISTIC_WATER_BLOCK.defaultBlockState().setValue(RealisticWaterBlock.INFINITE, false);
+		return stateFor(0, amount);
+	}
+
+	public static BlockState stateFor(int tint, int amount) {
+		BlockState full = RealisticWaterFluid.blockFor(tint).defaultBlockState().setValue(RealisticWaterBlock.INFINITE, false);
 		return amount >= 8 ? full : full.setValue(LiquidBlock.LEVEL, 8 - Math.max(1, amount));
 	}
 
 	private static final int SYNC_FLAGS = Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE | Block.UPDATE_SKIP_ON_PLACE;
 
 	public void apply(ServerPlayer player) {
-		applyIn(player.level(), player, this.positions, this.amounts);
+		applyIn(player.level(), player, this.positions, this.amounts, this.tint);
 	}
 
 	public static void applyIn(ServerLevel level, @Nullable ServerPlayer player, long[] positions, byte[] amounts) {
+		applyIn(level, player, positions, amounts, (byte) -1);
+	}
+
+	public static void applyIn(ServerLevel level, @Nullable ServerPlayer player, long[] positions, byte[] amounts, byte tint) {
 		for (int i = 0; i < positions.length; i++) {
 			BlockPos pos = BlockPos.of(positions[i]);
 			if (!level.isLoaded(pos) || player != null && pos.distSqr(player.blockPosition()) > 512 * 512) {
@@ -68,14 +81,14 @@ public record WaterSyncPayload(long[] positions, byte[] amounts) implements Cust
 			if (RealisticWaterBlock.isInfinite(current) || RealisticWaterBlock.isOcean(current)) {
 				continue;
 			}
-			boolean ours = RealisticWaterFluid.isRealistic(current.getFluidState()) && current.getBlock() == ModContent.REALISTIC_WATER_BLOCK;
+			boolean ours = RealisticWaterFluid.isRealistic(current.getFluidState()) && current.getBlock() instanceof RealisticWaterBlock;
 			int amount = amounts[i];
 			if (amount <= 0) {
 				if (ours) {
 					level.setBlock(pos, Blocks.AIR.defaultBlockState(), SYNC_FLAGS);
 				}
 			} else if (ours || current.isAir() || current.getBlock() instanceof RealisticLeavesBlock) {
-				BlockState target = stateFor(amount);
+				BlockState target = stateFor(tint >= 0 ? tint : ours ? RealisticWaterFluid.kindOf(current) : 0, amount);
 				if (current != target) {
 					level.setBlock(pos, target, SYNC_FLAGS);
 					FluidMixing.solidifyLavaAround(level, pos);

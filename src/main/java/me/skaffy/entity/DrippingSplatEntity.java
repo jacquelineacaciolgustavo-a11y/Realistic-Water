@@ -24,7 +24,10 @@ public class DrippingSplatEntity extends Entity implements ItemSupplier {
     private static final EntityDataAccessor<Direction> ATTACHED_FACE = SynchedEntityData.defineId(DrippingSplatEntity.class, EntityDataSerializers.DIRECTION);
 
     private int lifeTicks = 0;
-    private static final int MAX_LIFE = 160;
+    private static final int MAX_LIFE = 200;
+    private static final double MAX_SLIDE = 3.0D;
+    private double slideSpeed = 0.0D;
+    private double slid = 0.0D;
 
     public DrippingSplatEntity(EntityType<?> entityType, Level level) {
         super(entityType, level);
@@ -33,7 +36,7 @@ public class DrippingSplatEntity extends Entity implements ItemSupplier {
 
     public DrippingSplatEntity(Level level, Vec3 pos, Direction face, boolean isSlime) {
         this(ModContent.DRIPPING_SPLAT, level);
-        this.setPos(pos.x, pos.y, pos.z);
+        this.setPos(pos.x + face.getStepX() * 0.2D, pos.y, pos.z + face.getStepZ() * 0.2D);
         this.entityData.set(IS_SLIME, isSlime);
         this.entityData.set(ATTACHED_FACE, face);
     }
@@ -54,14 +57,23 @@ public class DrippingSplatEntity extends Entity implements ItemSupplier {
         super.tick();
         this.lifeTicks++;
 
-        if (this.lifeTicks % 3 == 0) {
-            this.setPos(this.getX(), this.getY() - 0.015, this.getZ());
+        boolean slimeKind = this.entityData.get(IS_SLIME);
+        double accel = slimeKind ? 0.0030D : 0.0012D;
+        double maxSpeed = slimeKind ? 0.06D : 0.025D;
+        this.slideSpeed = Math.min(this.slideSpeed + accel, maxSpeed);
+        net.minecraft.core.BlockPos below = net.minecraft.core.BlockPos.containing(this.getX(), this.getY() - this.slideSpeed - 0.1D, this.getZ());
+        boolean blocked = !this.level().getBlockState(below).getCollisionShape(this.level(), below).isEmpty();
+        if (!blocked && this.slid < MAX_SLIDE) {
+            this.setPos(this.getX(), this.getY() - this.slideSpeed, this.getZ());
+            this.slid += this.slideSpeed;
+        } else if (this.lifeTicks < MAX_LIFE - 20) {
+            this.lifeTicks = MAX_LIFE - 20;
         }
 
         if (this.level() instanceof ServerLevel serverLevel) {
             boolean slime = this.entityData.get(IS_SLIME);
-            if (this.random.nextFloat() < 0.25F) {
-                serverLevel.sendParticles(slime ? ParticleTypes.ITEM_SLIME : ParticleTypes.DRIPPING_HONEY,
+            if (this.random.nextFloat() < 0.5F) {
+                serverLevel.sendParticles(slime ? ParticleTypes.ITEM_SLIME : ParticleTypes.FALLING_HONEY,
                     this.getX(), this.getY(), this.getZ(), 1, 0.05, 0.05, 0.05, 0.01);
             }
 

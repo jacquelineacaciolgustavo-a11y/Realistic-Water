@@ -55,6 +55,9 @@ public final class WaterCommands {
 			.then(op("sand")
 				.executes(c -> ball(c, 2, Material.SAND))
 				.then(argument("size", IntegerArgumentType.integer(1, 64)).executes(c -> ball(c, IntegerArgumentType.getInteger(c, "size"), Material.SAND))))
+			.then(op("snow")
+				.executes(c -> ball(c, 2, Material.SNOW))
+				.then(argument("size", IntegerArgumentType.integer(1, 64)).executes(c -> ball(c, IntegerArgumentType.getInteger(c, "size"), Material.SNOW))))
 			.then(op("lava")
 				.executes(c -> ball(c, 3, Material.LAVA))
 				.then(argument("size", IntegerArgumentType.integer(1, 64)).executes(c -> ball(c, IntegerArgumentType.getInteger(c, "size"), Material.LAVA))))
@@ -73,6 +76,11 @@ public final class WaterCommands {
 				.then(op("sand").executes(c -> {
 					WaterWorld.get().removeAll(Minecraft.getInstance().options.renderDistance().get() + 2, Material.SAND);
 					c.getSource().sendFeedback(Component.literal("Removing all realistic sand around you"));
+					return 1;
+				}))
+				.then(op("snow").executes(c -> {
+					WaterWorld.get().removeAll(Minecraft.getInstance().options.renderDistance().get() + 2, Material.SNOW);
+					c.getSource().sendFeedback(Component.literal("Removing all realistic snow around you"));
 					return 1;
 				}))
 				.then(op("lava").executes(c -> {

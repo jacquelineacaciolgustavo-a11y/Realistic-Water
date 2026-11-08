@@ -4,6 +4,7 @@ import me.skaffy.block.HotObsidianBlock;
 import me.skaffy.block.RealisticLavaBlock;
 import me.skaffy.block.RealisticLeavesBlock;
 import me.skaffy.block.RealisticSandBlock;
+import me.skaffy.block.RealisticSnowBlock;
 import me.skaffy.block.RealisticWaterBlock;
 import me.skaffy.block.SourceBlock;
 import me.skaffy.block.WaveMakerBlock;
@@ -106,9 +107,9 @@ public final class ModContent {
     });
 
     public static final FlowingFluid FLOWING_REALISTIC_MUD = Registry.register(
-        BuiltInRegistries.FLUID, RealisticWater.id("flowing_realistic_mud"), new RealisticWaterFluid.Flowing());
+        BuiltInRegistries.FLUID, RealisticWater.id("flowing_realistic_mud"), new RealisticWaterFluid.Flowing(1));
     public static final FlowingFluid REALISTIC_MUD = Registry.register(
-        BuiltInRegistries.FLUID, RealisticWater.id("realistic_mud"), new RealisticWaterFluid.Source());
+        BuiltInRegistries.FLUID, RealisticWater.id("realistic_mud"), new RealisticWaterFluid.Source(1));
     public static final ResourceKey<Block> REALISTIC_MUD_BLOCK_KEY = ResourceKey.create(Registries.BLOCK, RealisticWater.id("realistic_mud"));
     public static final Block REALISTIC_MUD_BLOCK = Registry.register(BuiltInRegistries.BLOCK, REALISTIC_MUD_BLOCK_KEY, new RealisticWaterBlock(
         REALISTIC_MUD, BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_BROWN).replaceable().noCollision().strength(100.0F).pushReaction(PushReaction.POPPED).noLootTable().liquid().sound(SoundType.MUD).setId(REALISTIC_MUD_BLOCK_KEY)));
@@ -117,9 +118,9 @@ public final class ModContent {
         REALISTIC_MUD, amount -> ModContent.REALISTIC_MUD_BLOCK.defaultBlockState(), new Item.Properties().craftRemainder(Items.BUCKET).stacksTo(1).setId(REALISTIC_MUD_BUCKET_KEY)));
 
     public static final FlowingFluid FLOWING_REALISTIC_MILK = Registry.register(
-        BuiltInRegistries.FLUID, RealisticWater.id("flowing_realistic_milk"), new RealisticWaterFluid.Flowing());
+        BuiltInRegistries.FLUID, RealisticWater.id("flowing_realistic_milk"), new RealisticWaterFluid.Flowing(2));
     public static final FlowingFluid REALISTIC_MILK = Registry.register(
-        BuiltInRegistries.FLUID, RealisticWater.id("realistic_milk"), new RealisticWaterFluid.Source());
+        BuiltInRegistries.FLUID, RealisticWater.id("realistic_milk"), new RealisticWaterFluid.Source(2));
     public static final ResourceKey<Block> REALISTIC_MILK_BLOCK_KEY = ResourceKey.create(Registries.BLOCK, RealisticWater.id("realistic_milk"));
     public static final Block REALISTIC_MILK_BLOCK = Registry.register(BuiltInRegistries.BLOCK, REALISTIC_MILK_BLOCK_KEY, new RealisticWaterBlock(
         REALISTIC_MILK, BlockBehaviour.Properties.of().mapColor(MapColor.SNOW).replaceable().noCollision().strength(100.0F).pushReaction(PushReaction.POPPED).noLootTable().liquid().sound(SoundType.EMPTY).setId(REALISTIC_MILK_BLOCK_KEY)));
@@ -128,9 +129,9 @@ public final class ModContent {
         REALISTIC_MILK, amount -> ModContent.REALISTIC_MILK_BLOCK.defaultBlockState(), new Item.Properties().craftRemainder(Items.BUCKET).stacksTo(1).setId(REALISTIC_MILK_BUCKET_KEY)));
 
     public static final FlowingFluid FLOWING_REALISTIC_COLA = Registry.register(
-        BuiltInRegistries.FLUID, RealisticWater.id("flowing_realistic_cola"), new RealisticWaterFluid.Flowing());
+        BuiltInRegistries.FLUID, RealisticWater.id("flowing_realistic_cola"), new RealisticWaterFluid.Flowing(3));
     public static final FlowingFluid REALISTIC_COLA = Registry.register(
-        BuiltInRegistries.FLUID, RealisticWater.id("realistic_cola"), new RealisticWaterFluid.Source());
+        BuiltInRegistries.FLUID, RealisticWater.id("realistic_cola"), new RealisticWaterFluid.Source(3));
     public static final ResourceKey<Block> REALISTIC_COLA_BLOCK_KEY = ResourceKey.create(Registries.BLOCK, RealisticWater.id("realistic_cola"));
     public static final Block REALISTIC_COLA_BLOCK = Registry.register(BuiltInRegistries.BLOCK, REALISTIC_COLA_BLOCK_KEY, new RealisticWaterBlock(
         REALISTIC_COLA, BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_BLACK).replaceable().noCollision().strength(100.0F).pushReaction(PushReaction.POPPED).noLootTable().liquid().sound(SoundType.EMPTY).setId(REALISTIC_COLA_BLOCK_KEY)));
@@ -175,6 +176,11 @@ public final class ModContent {
     public static final Block REALISTIC_SAND = Registry.register(BuiltInRegistries.BLOCK, REALISTIC_SAND_KEY, new RealisticSandBlock(BlockBehaviour.Properties.of().mapColor(MapColor.SAND).instrument(NoteBlockInstrument.SNARE).strength(0.5F).sound(SoundType.SAND).noOcclusion().pushReaction(PushReaction.POPPED).isSuffocating((state, level, pos) -> false).isViewBlocking((state, level, pos, box) -> false).setId(REALISTIC_SAND_KEY)));
     public static final ResourceKey<Item> REALISTIC_SAND_ITEM_KEY = ResourceKey.create(Registries.ITEM, RealisticWater.id("realistic_sand"));
     public static final Item REALISTIC_SAND_ITEM = registerBlockItem(REALISTIC_SAND_ITEM_KEY, REALISTIC_SAND);
+
+    public static final ResourceKey<Block> REALISTIC_SNOW_KEY = ResourceKey.create(Registries.BLOCK, RealisticWater.id("realistic_snow"));
+    public static final Block REALISTIC_SNOW = Registry.register(BuiltInRegistries.BLOCK, REALISTIC_SNOW_KEY, new RealisticSnowBlock(BlockBehaviour.Properties.of().mapColor(MapColor.SNOW).instrument(NoteBlockInstrument.SNARE).strength(0.2F).sound(SoundType.SNOW).noOcclusion().pushReaction(PushReaction.POPPED).isSuffocating((state, level, pos) -> false).isViewBlocking((state, level, pos, box) -> false).setId(REALISTIC_SNOW_KEY)));
+    public static final ResourceKey<Item> REALISTIC_SNOW_ITEM_KEY = ResourceKey.create(Registries.ITEM, RealisticWater.id("realistic_snow"));
+    public static final Item REALISTIC_SNOW_ITEM = registerBlockItem(REALISTIC_SNOW_ITEM_KEY, REALISTIC_SNOW);
 
     public static final ResourceKey<Block> REALISTIC_LEAVES_KEY = ResourceKey.create(Registries.BLOCK, RealisticWater.id("realistic_leaves"));
     public static final Block REALISTIC_LEAVES = Registry.register(BuiltInRegistries.BLOCK, REALISTIC_LEAVES_KEY, new RealisticLeavesBlock(BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_ORANGE).strength(0.2F).sound(SoundType.AZALEA_LEAVES).noOcclusion().ignitedByLava().pushReaction(PushReaction.POPPED).isSuffocating((state, level, pos) -> false).isViewBlocking((state, level, pos, box) -> false).setId(REALISTIC_LEAVES_KEY)));
@@ -263,7 +269,7 @@ public final class ModContent {
             output.accept(WAVE_MAKER_ITEM);
             output.accept(CONVERTER);
             output.accept(REALISTIC_BOAT_ITEM);
-            output.accept(RealisticBlockItem.of(Blocks.SNOW_BLOCK, 1));
+            output.accept(REALISTIC_SNOW_ITEM);
             output.accept(REALISTIC_SAND_ITEM);
             output.accept(REALISTIC_LEAVES_ITEM);
         })

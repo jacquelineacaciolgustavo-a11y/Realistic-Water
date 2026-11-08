@@ -92,6 +92,9 @@ public class RealisticBlockItem extends Item {
 		if (stack.getItem() instanceof BoatItem boat) {
 			return RealisticBoatItem.of(boat, stack.getCount());
 		}
+		if (stack.getItem() instanceof BlockItem snow && snow.getBlock() == Blocks.SNOW_BLOCK) {
+			return new ItemStack(ModContent.REALISTIC_SNOW_ITEM, stack.getCount());
+		}
 		return convertible(stack) ? of(((BlockItem) stack.getItem()).getBlock(), stack.getCount()) : ItemStack.EMPTY;
 	}
 

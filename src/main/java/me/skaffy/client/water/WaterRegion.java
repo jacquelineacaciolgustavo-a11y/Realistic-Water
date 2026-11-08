@@ -198,6 +198,8 @@ public final class WaterRegion implements AutoCloseable {
 	final int id;
 	final int res;
 	final Material material;
+	/** Liquido dentro da regiao de agua: 0 agua, 1 lama, 2 leite, 3 coca. */
+	int tint;
 
 	int ox;
 	int oy;
@@ -1184,7 +1186,7 @@ public final class WaterRegion implements AutoCloseable {
 	}
 
 	private static int shadowCover(BlockState state) {
-		if (state.getBlock() == ModContent.REALISTIC_SAND || state.getBlock() == ModContent.REALISTIC_LEAVES) {
+		if (state.getBlock() == ModContent.REALISTIC_SAND || state.getBlock() == ModContent.REALISTIC_SNOW || state.getBlock() == ModContent.REALISTIC_LEAVES) {
 			return state.getValue(LooseLayerBlock.LAYERS);
 		}
 		if (state.getBlock() == ModContent.REALISTIC_SLIME_BLOCK) {
@@ -1818,6 +1820,10 @@ public final class WaterRegion implements AutoCloseable {
 
 		if (this.material == Material.SLIME && WaterSettings.slimeViscosity > 0.0F && WaterSettings.slimeViscosityIterations > 0) {
 			this.viscosity(cb, ubo, faceGroups, false);
+		} else if (this.material == Material.WATER && this.ocean == null && this.tint == 1) {
+			this.viscosity(cb, ubo, faceGroups, MUD_VISCOSITY, MUD_VISCOSITY_SWEEPS);
+		} else if (this.material == Material.WATER && this.ocean == null && this.tint == 2) {
+			this.viscosity(cb, ubo, faceGroups, MILK_VISCOSITY, 3);
 		} else if (this.material == Material.WATER && this.floodViscous) {
 			this.viscosity(cb, ubo, faceGroups, true);
 		}
@@ -1995,10 +2001,18 @@ public final class WaterRegion implements AutoCloseable {
 	private static final float FLOOD_VISCOSITY = 6.0F;
 	private static final int FLOOD_VISCOSITY_SWEEPS = 6;
 
+	private static final float MUD_VISCOSITY = 12.0F;
+	private static final int MUD_VISCOSITY_SWEEPS = 8;
+	private static final float MILK_VISCOSITY = 1.2F;
+
 	private void viscosity(VkCommandBuffer cb, Desc ubo, int faceGroups, boolean flood) {
+		this.viscosity(cb, ubo, faceGroups, flood ? FLOOD_VISCOSITY : WaterSettings.slimeViscosity,
+			flood ? FLOOD_VISCOSITY_SWEEPS : Math.max(2, WaterSettings.slimeViscosityIterations));
+	}
+
+	private void viscosity(VkCommandBuffer cb, Desc ubo, int faceGroups, float viscosityBlocks, int sweeps) {
 		ComputeProgram visc = programs()[23];
-		int sweeps = flood ? FLOOD_VISCOSITY_SWEEPS : Math.max(2, WaterSettings.slimeViscosityIterations);
-		float nu = (flood ? FLOOD_VISCOSITY : WaterSettings.slimeViscosity) * this.res * this.res;
+		float nu = viscosityBlocks * this.res * this.res;
 		for (int k = 0; k < sweeps; k++) {
 			int src = k == 0 ? -1 : ((k - 1) % 2) * this.numFaces;
 			int dst = k == sweeps - 1 ? -1 : (k % 2) * this.numFaces;

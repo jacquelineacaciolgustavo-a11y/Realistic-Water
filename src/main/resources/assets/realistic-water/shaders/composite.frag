@@ -33,6 +33,8 @@ float gBackground = -1.0;
 float gDepth = 0.0;
 vec3 gScatter = vec3(0.0);
 vec3 gAbsorb = vec3(0.0);
+float gDensity = 0.0;
+float gTint = 0.0;
 vec3 gSeaWater = vec3(-1.0);
 float gSeaRough = 0.0;
 
@@ -59,9 +61,51 @@ vec4 seaColorAt(vec3 rel) {
     return sum.w > 1e-4 ? vec4(sum.rgb / sum.w, sum.w) : vec4(0.0);
 }
 
+// Lama, leite e coca-cola: mesma simulacao da agua, so muda a cor (o id do material carrega 0.05 por tipo).
+// Beer-Lambert: transmitted = fundo * exp(-absorb * caminho); scattered = cor * (1 - exp(-densidade * caminho)).
+void liquidTint(int t) {
+    gTint = float(t);
+    if (t == 1) {
+        // Lama: marrom grosso, nada transparente.
+        gAbsorb = vec3(6.0, 8.0, 11.0);
+        gScatter = vec3(0.30, 0.19, 0.10);
+        gDensity = 10.0;
+    } else if (t == 2) {
+        // Leite: branco cremoso (nada neon), quase opaco.
+        gAbsorb = vec3(0.20, 0.25, 0.35);
+        gScatter = vec3(0.80, 0.79, 0.74);
+        gDensity = 9.0;
+    } else {
+        // Coca-cola: marrom escuro; quanto mais fundo/acumulado, mais perto do preto.
+        gAbsorb = vec3(1.6, 2.6, 3.8);
+        gScatter = vec3(0.07, 0.03, 0.012);
+        gDensity = 1.5;
+    }
+}
+
+// Bolhas em celulas: usado na espuma do leite e no gas da coca.
+float liquidBubbles(vec2 p, float scale, float minR, float maxR) {
+    vec2 q = p * scale;
+    ivec2 cell = ivec2(floor(q));
+    float best = 0.0;
+    for (int k = 0; k < 9; k++) {
+        ivec2 c = cell + ivec2(k % 3 - 1, k / 3 - 1);
+        uint s = hash(uint(c.x) * 73856093u ^ uint(c.y) * 19349663u);
+        vec2 feature = vec2(c) + 0.15 + 0.7 * vec2(rand(s), rand(s));
+        float radius = mix(minR, maxR, rand(s));
+        float d = length(q - feature);
+        float body = 1.0 - smoothstep(radius * 0.85, radius, d);
+        float rim = smoothstep(radius * 0.55, radius * 0.9, d) * body;
+        best = max(best, max(body * 0.45, rim));
+    }
+    return best;
+}
+
 void seaLook(vec3 rel) {
     gScatter = G.scatter.rgb;
     gAbsorb = G.absorb.rgb;
+    gDensity = G.scatter.w;
+    gTint = 0.0;
     gSeaWater = vec3(-1.0);
     if (pc.sea < 0.5 || pc.colorMap < 0.5) {
         return;
@@ -240,7 +284,7 @@ vec3 shadeAboveWater(vec2 uv, vec3 n, float fd, float sceneDist, float ambient, 
     under = pow(max(under, vec3(0.0)), vec3(1.0 + wet)) * (1.0 - 0.15 * wet);
     vec3 transmitted = under * exp(-gAbsorb * path);
     vec3 lightColor = vanillaLight(bs);
-    vec3 scattered = gScatter * lightColor * (1.0 - exp(-G.scatter.w * path));
+    vec3 scattered = gScatter * lightColor * (1.0 - exp(-gDensity * path));
     vec3 water = transmitted + scattered;
     if (G.compat.w > 0.0) {
         vec3 tint = gSeaWater.r >= 0.0 ? gSeaWater * VANILLA_WATER_TEXTURE * lightColor
@@ -420,6 +464,14 @@ vec3 shadePixel(vec2 uv) {
     gSeaRough = seaSurface ? clamp(fract(matSample.a), 0.0, 0.9) : 0.0;
     float whitecap = seaSurface ? floor(matSample.a - 2.0 + 0.01) / 7.0 : 0.0;
     seaLook(underwater || !hasFluid ? vec3(0.0) : (G.invView * vec4(viewPosAt(uv, fd), 1.0)).xyz);
+    float tintId = floor(matId / 0.05 + 0.5);
+    if (hasFluid && matTagged && !surfaceOnly && tintId > 0.5 && tintId < 3.5) {
+        liquidTint(int(tintId));
+    }
+    int cameraTint = int(G.matD.w + 0.5);
+    if (underwater && !lavaPass && cameraTint > 0 && cameraTint < 4) {
+        liquidTint(cameraTint);
+    }
 
     if (underwater) {
         vec3 deep = lavaPass ? G.scatter.rgb * (1.2 + ambient) : gScatter * ambient;
@@ -430,7 +482,7 @@ vec3 shadePixel(vec2 uv) {
             vec4 clip = G.proj * vec4(viewPosAt(uv, fd), 1.0);
             outDepth = clip.z / clip.w;
         }
-        float fog = G.scatter.w * G.misc.x;
+        float fog = gDensity * G.misc.x;
         color = color * exp(-gAbsorb * visible * G.misc.x) + deep * (1.0 - exp(-fog * visible));
     } else if (hasFluid) {
         color = lavaPass ? shadeAboveLava(uv, g.xyz, fd, ambient) : shadeAboveWater(uv, g.xyz, fd, sceneDist, ambient, surfaceLight);
@@ -446,6 +498,21 @@ vec3 shadePixel(vec2 uv) {
         vec3 L = G.sunDir.w > 0.0 ? normalize(G.sunDir.xyz) : normalize(mat3(G.view) * vec3(0.0, 1.0, 0.0));
         float lit = mix(0.72, 1.08, clamp(dot(normalize(g.xyz), L) * 0.5 + 0.5, 0.0, 1.0));
         color = mix(color, vec3(0.93, 0.96, 1.0) * lit * vanillaLight(surfaceLight), clamp(cover, 0.0, 0.95));
+    }
+
+    if (hasFluid && matTagged && !surfaceOnly && !underwater && gTint > 1.5) {
+        vec3 P = viewPosAt(uv, fd);
+        vec3 world = G.misc.yzw + (G.invView * vec4(P, 1.0)).xyz;
+        vec3 L = G.sunDir.w > 0.0 ? normalize(G.sunDir.xyz) : normalize(mat3(G.view) * vec3(0.0, 1.0, 0.0));
+        float lit = mix(0.72, 1.05, clamp(dot(normalize(g.xyz), L) * 0.5 + 0.5, 0.0, 1.0));
+        vec3 light = vanillaLight(surfaceLight);
+        if (gTint < 2.5) {
+            float f = max(liquidBubbles(world.xz, 5.0, 0.30, 0.48), liquidBubbles(world.xz + 7.3, 11.0, 0.25, 0.45) * 0.8);
+            color = mix(color, vec3(0.92, 0.91, 0.86) * lit * light, clamp(f * 0.9, 0.0, 0.9));
+        } else {
+            float f = liquidBubbles(world.xz, 9.0, 0.10, 0.22);
+            color = mix(color, vec3(0.80, 0.60, 0.40) * lit * light, clamp(f * 0.75, 0.0, 0.7));
+        }
     }
 
     if (foam.a > 1e-4) {

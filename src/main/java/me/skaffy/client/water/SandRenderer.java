@@ -21,10 +21,12 @@ import org.lwjgl.vulkan.VkCommandBuffer;
 
 final class SandRenderer implements AutoCloseable {
 	private static final Identifier SAND_TEXTURE = Identifier.withDefaultNamespace("textures/block/sand.png");
+	private static final Identifier SNOW_TEXTURE = Identifier.withDefaultNamespace("textures/block/snow.png");
 
 	private final Map<Integer, GraphicsProgram> grains = new HashMap<>();
 	private final ComputeProgram cull;
 	private final VkBuf texture;
+	private final VkBuf snowTexture;
 	private final Sampler linear = new Sampler(true);
 	private final Sampler nearest = new Sampler(false);
 
@@ -33,6 +35,7 @@ final class SandRenderer implements AutoCloseable {
 		int S = Desc.SSBO;
 		this.cull = new ComputeProgram("grain_cull.comp", U, S, S, S, S, S, S, Desc.TEX);
 		this.texture = loadTexture();
+		this.snowTexture = loadTexture(SNOW_TEXTURE, 0xFFF8FEFE);
 	}
 
 	private static VkBuf loadTexture() {
@@ -113,7 +116,7 @@ final class SandRenderer implements AutoCloseable {
 		GraphicsProgram.begin(cb, width, height, mainColorView, null, mainDepthView);
 		for (WaterRenderer.Body body : bodies) {
 			WaterRegion r = body.region();
-			grains.bind(cb, body.ubo(), Desc.ssbo(r.surfaceParticles), Desc.ssbo(this.texture), Desc.ssbo(r.light()),
+			grains.bind(cb, body.ubo(), Desc.ssbo(r.surfaceParticles), Desc.ssbo(r.material == Material.SNOW ? this.snowTexture : this.texture), Desc.ssbo(r.light()),
 				Desc.tex(lightmap, this.linear.handle));
 			grains.drawIndirect(cb, r.args, WaterRegion.ARGS_GRAIN_DRAW);
 		}
@@ -125,6 +128,7 @@ final class SandRenderer implements AutoCloseable {
 		this.grains.values().forEach(GraphicsProgram::close);
 		this.cull.close();
 		this.texture.close();
+		this.snowTexture.close();
 		this.linear.close();
 		this.nearest.close();
 	}

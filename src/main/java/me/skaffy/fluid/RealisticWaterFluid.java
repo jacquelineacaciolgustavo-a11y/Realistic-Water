@@ -30,19 +30,66 @@ import net.minecraft.world.level.material.FluidState;
 import org.jspecify.annotations.Nullable;
 
 public abstract class RealisticWaterFluid extends FlowingFluid {
+	/** 0 = agua, 1 = lama, 2 = leite, 3 = coca-cola. */
+	protected final int kind;
+
+	protected RealisticWaterFluid(int kind) {
+		this.kind = kind;
+	}
+
+	public int kind() {
+		return this.kind;
+	}
+
 	@Override
 	public Fluid getFlowing() {
-		return ModContent.FLOWING_REALISTIC_WATER;
+		return switch (this.kind) {
+			case 1 -> ModContent.FLOWING_REALISTIC_MUD;
+			case 2 -> ModContent.FLOWING_REALISTIC_MILK;
+			case 3 -> ModContent.FLOWING_REALISTIC_COLA;
+			default -> ModContent.FLOWING_REALISTIC_WATER;
+		};
 	}
 
 	@Override
 	public Fluid getSource() {
-		return ModContent.REALISTIC_WATER;
+		return switch (this.kind) {
+			case 1 -> ModContent.REALISTIC_MUD;
+			case 2 -> ModContent.REALISTIC_MILK;
+			case 3 -> ModContent.REALISTIC_COLA;
+			default -> ModContent.REALISTIC_WATER;
+		};
 	}
 
 	@Override
 	public Item getBucket() {
-		return ModContent.REALISTIC_WATER_BUCKET;
+		return switch (this.kind) {
+			case 1 -> ModContent.REALISTIC_MUD_BUCKET;
+			case 2 -> ModContent.REALISTIC_MILK_BUCKET;
+			case 3 -> ModContent.REALISTIC_COLA_BUCKET;
+			default -> ModContent.REALISTIC_WATER_BUCKET;
+		};
+	}
+
+	public static Block blockFor(int kind) {
+		return switch (kind) {
+			case 1 -> ModContent.REALISTIC_MUD_BLOCK;
+			case 2 -> ModContent.REALISTIC_MILK_BLOCK;
+			case 3 -> ModContent.REALISTIC_COLA_BLOCK;
+			default -> ModContent.REALISTIC_WATER_BLOCK;
+		};
+	}
+
+	/** Qual liquido (0 agua, 1 lama, 2 leite, 3 coca) este bloco guarda. */
+	public static int kindOf(BlockState state) {
+		Block block = state.getBlock();
+		if (block == ModContent.REALISTIC_MUD_BLOCK) {
+			return 1;
+		}
+		if (block == ModContent.REALISTIC_MILK_BLOCK) {
+			return 2;
+		}
+		return block == ModContent.REALISTIC_COLA_BLOCK ? 3 : 0;
 	}
 
 	public static boolean isRealistic(FluidState state) {
@@ -81,14 +128,14 @@ public abstract class RealisticWaterFluid extends FlowingFluid {
 
 	@Override
 	public BlockState createLegacyBlock(final FluidState fluidState) {
-		return ModContent.REALISTIC_WATER_BLOCK.defaultBlockState()
+		return blockFor(this.kind).defaultBlockState()
 			.setValue(LiquidBlock.LEVEL, getLegacyLevel(fluidState))
 			.setValue(RealisticWaterBlock.INFINITE, fluidState.isSource());
 	}
 
 	@Override
 	public boolean isSame(final Fluid other) {
-		return other == ModContent.REALISTIC_WATER || other == ModContent.FLOWING_REALISTIC_WATER;
+		return other == this.getSource() || other == this.getFlowing();
 	}
 
 	@Override
@@ -117,6 +164,14 @@ public abstract class RealisticWaterFluid extends FlowingFluid {
 	}
 
 	public static class Flowing extends RealisticWaterFluid {
+		public Flowing() {
+			super(0);
+		}
+
+		public Flowing(int kind) {
+			super(kind);
+		}
+
 		@Override
 		protected void createFluidStateDefinition(final StateDefinition.Builder<Fluid, FluidState> builder) {
 			super.createFluidStateDefinition(builder);
@@ -135,6 +190,14 @@ public abstract class RealisticWaterFluid extends FlowingFluid {
 	}
 
 	public static class Source extends RealisticWaterFluid {
+		public Source() {
+			super(0);
+		}
+
+		public Source(int kind) {
+			super(kind);
+		}
+
 		@Override
 		public int getAmount(final FluidState fluidState) {
 			return 8;

@@ -76,6 +76,14 @@ public class RealisticProjectileEntity extends ThrowableItemProjectile {
                 return;
             }
 
+            BlockPos target = pos.relative(face);
+            BlockState at = level.getBlockState(target);
+            if (at.isAir()) {
+                level.setBlock(target, ModContent.REALISTIC_SNOW.defaultBlockState().setValue(me.skaffy.block.RealisticSnowBlock.LAYERS, 3), 3);
+            } else if (at.getBlock() == ModContent.REALISTIC_SNOW) {
+                int layers = Math.min(me.skaffy.block.RealisticSnowBlock.MAX_LAYERS, at.getValue(me.skaffy.block.RealisticSnowBlock.LAYERS) + 3);
+                level.setBlock(target, at.setValue(me.skaffy.block.RealisticSnowBlock.LAYERS, layers), 3);
+            }
             level.playSound(null, pos, SoundEvents.SNOW_BREAK, SoundSource.BLOCKS, 1.0F, 1.0F);
             level.sendParticles(new BlockParticleOption(ParticleTypes.BLOCK, Blocks.SNOW_BLOCK.defaultBlockState()),
                 hit.getLocation().x, hit.getLocation().y + 0.05, hit.getLocation().z, 40, 0.25, 0.1, 0.25, 0.15);
