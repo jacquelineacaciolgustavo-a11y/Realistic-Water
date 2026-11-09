@@ -2,6 +2,7 @@ package me.skaffy.entity;
 
 import me.skaffy.ModContent;
 import me.skaffy.net.LavaSyncPayload;
+import me.skaffy.net.SlimeSyncPayload;
 import me.skaffy.net.WaterSyncPayload;
 import me.skaffy.portal.PortalTransit;
 import net.minecraft.core.BlockPos;
@@ -49,22 +50,48 @@ public class RealisticProjectileEntity extends ThrowableItemProjectile {
     }
 
     @Override
+    public void tick() {
+        super.tick();
+        if (this.level() instanceof ServerLevel serverLevel && this.tickCount % 2 == 0) {
+            // Rastro no ar: pinga um pouco do liquido enquanto a bola voa.
+            switch (this.kind) {
+                case 1 -> serverLevel.sendParticles(ParticleTypes.ITEM_SLIME, this.getX(), this.getY(), this.getZ(), 1, 0.05, 0.05, 0.05, 0.0);
+                case 2 -> serverLevel.sendParticles(ParticleTypes.FALLING_HONEY, this.getX(), this.getY(), this.getZ(), 1, 0.05, 0.05, 0.05, 0.0);
+                case 3 -> serverLevel.sendParticles(ParticleTypes.SPLASH, this.getX(), this.getY(), this.getZ(), 1, 0.05, 0.05, 0.05, 0.0);
+                case 4 -> serverLevel.sendParticles(ParticleTypes.LAVA, this.getX(), this.getY(), this.getZ(), 1, 0.05, 0.05, 0.05, 0.0);
+                default -> serverLevel.sendParticles(ParticleTypes.SNOWFLAKE, this.getX(), this.getY(), this.getZ(), 1, 0.05, 0.05, 0.05, 0.0);
+            }
+        }
+    }
+
+    @Override
     protected void onHit(HitResult hitResult) {
         super.onHit(hitResult);
         if (!this.level().isClientSide()) {
-            if (this.kind >= 3) {
+            if (this.kind >= 1) {
+                // Agua, lava, slime e mel: ao bater viram fluido simulado de verdade (escorre), nao uma textura grudada.
                 this.splashFluid(hitResult);
             } else if (hitResult instanceof BlockHitResult blockHit) {
                 this.handleBlockHit(blockHit);
+            } else {
+                this.snowPuff(hitResult.getLocation());
             }
             this.discard();
         }
     }
 
-    /** Bola de agua (kind 3) e bola de lava (kind 4): ao bater, viram 1 bloco finito do liquido realista. */
+    private void snowPuff(Vec3 at) {
+        ServerLevel level = (ServerLevel) this.level();
+        level.playSound(null, at.x, at.y, at.z, SoundEvents.SNOW_BREAK, SoundSource.BLOCKS, 0.8F, 1.2F);
+        level.sendParticles(new BlockParticleOption(ParticleTypes.BLOCK, Blocks.SNOW_BLOCK.defaultBlockState()),
+            at.x, at.y, at.z, 12, 0.12, 0.08, 0.12, 0.1);
+    }
+
+    /** Bolas de liquido (1 slime, 2 mel, 3 agua, 4 lava): ao bater, viram uma porcao finita do liquido realista, que escorre. */
     private void splashFluid(HitResult hit) {
         ServerLevel level = (ServerLevel) this.level();
         boolean lava = this.kind == 4;
+        boolean water = this.kind == 3;
         Vec3 at = hit.getLocation();
         BlockPos target;
         if (hit instanceof BlockHitResult blockHit) {
@@ -79,7 +106,7 @@ public class RealisticProjectileEntity extends ThrowableItemProjectile {
             level.playSound(null, at.x, at.y, at.z, SoundEvents.FIRE_EXTINGUISH, SoundSource.BLOCKS, 0.4F, 1.6F);
             return;
         }
-        if (!lava && level.environmentAttributes().getValue(EnvironmentAttributes.WATER_EVAPORATES, target)) {
+        if (water && level.environmentAttributes().getValue(EnvironmentAttributes.WATER_EVAPORATES, target)) {
             level.playSound(null, at.x, at.y, at.z, SoundEvents.FIRE_EXTINGUISH, SoundSource.BLOCKS, 0.5F, 2.6F);
             PortalTransit.steamBurst(level, new Vec3(target.getX() + 0.5, target.getY() + 0.1, target.getZ() + 0.5), 8.0F);
             return;
@@ -87,8 +114,17 @@ public class RealisticProjectileEntity extends ThrowableItemProjectile {
         if (!current.isAir()) {
             level.destroyBlock(target, true);
         }
-        level.setBlock(target, lava ? LavaSyncPayload.stateFor(8) : WaterSyncPayload.stateFor(8), 11);
-        if (lava) {
+        BlockState fluid = switch (this.kind) {
+            case 1 -> SlimeSyncPayload.stateFor(4);
+            case 2 -> WaterSyncPayload.stateFor(5, 4);
+            case 4 -> LavaSyncPayload.stateFor(8);
+            default -> WaterSyncPayload.stateFor(8);
+        };
+        level.setBlock(target, fluid, 11);
+        if (this.kind == 1 || this.kind == 2) {
+            level.playSound(null, at.x, at.y, at.z, this.kind == 1 ? SoundEvents.SLIME_BLOCK_PLACE : SoundEvents.HONEY_BLOCK_PLACE, SoundSource.BLOCKS, 1.0F, 1.1F);
+            level.sendParticles(this.kind == 1 ? ParticleTypes.ITEM_SLIME : ParticleTypes.FALLING_HONEY, at.x, at.y + 0.1, at.z, 10, 0.2, 0.1, 0.2, 0.05);
+        } else if (lava) {
             level.playSound(null, at.x, at.y, at.z, SoundEvents.BUCKET_EMPTY_LAVA, SoundSource.BLOCKS, 1.0F, 1.0F);
             level.sendParticles(ParticleTypes.LAVA, at.x, at.y + 0.1, at.z, 12, 0.2, 0.1, 0.2, 0.1);
         } else {
@@ -120,20 +156,22 @@ public class RealisticProjectileEntity extends ThrowableItemProjectile {
                 return;
             }
 
-            BlockPos target = pos.relative(face);
-            BlockState at = level.getBlockState(target);
-            if (at.isAir()) {
-                level.setBlock(target, ModContent.REALISTIC_SNOW.defaultBlockState().setValue(me.skaffy.block.RealisticSnowBlock.LAYERS, 3), 3);
-            } else if (at.getBlock() == ModContent.REALISTIC_SNOW) {
-                int layers = Math.min(me.skaffy.block.RealisticSnowBlock.MAX_LAYERS, at.getValue(me.skaffy.block.RealisticSnowBlock.LAYERS) + 3);
-                level.setBlock(target, at.setValue(me.skaffy.block.RealisticSnowBlock.LAYERS, layers), 3);
+            Vec3 hitAt = hit.getLocation();
+            // Uma bolinha so deixa neve ao cair numa superficie de cima, e so 1 camada (1/8 de bloco).
+            // Em parede, teto ou lateral ela apenas se desfaz em pozinho, sem formar monte.
+            if (face == Direction.UP) {
+                BlockPos target = pos.relative(face);
+                BlockState at = level.getBlockState(target);
+                if (at.isAir()) {
+                    level.setBlock(target, ModContent.REALISTIC_SNOW.defaultBlockState().setValue(me.skaffy.block.RealisticSnowBlock.LAYERS, 1), 3);
+                } else if (at.getBlock() == ModContent.REALISTIC_SNOW) {
+                    int layers = Math.min(me.skaffy.block.RealisticSnowBlock.MAX_LAYERS, at.getValue(me.skaffy.block.RealisticSnowBlock.LAYERS) + 1);
+                    level.setBlock(target, at.setValue(me.skaffy.block.RealisticSnowBlock.LAYERS, layers), 3);
+                }
             }
             level.playSound(null, pos, SoundEvents.SNOW_BREAK, SoundSource.BLOCKS, 1.0F, 1.0F);
             level.sendParticles(new BlockParticleOption(ParticleTypes.BLOCK, Blocks.SNOW_BLOCK.defaultBlockState()),
-                hit.getLocation().x, hit.getLocation().y + 0.05, hit.getLocation().z, 40, 0.25, 0.1, 0.25, 0.15);
-        } else if (face.getAxis().isHorizontal()) {
-            DrippingSplatEntity splat = new DrippingSplatEntity(level, hit.getLocation(), face, this.kind == 1);
-            level.addFreshEntity(splat);
+                hitAt.x, hitAt.y + 0.05, hitAt.z, 14, 0.12, 0.06, 0.12, 0.1);
         }
     }
 }

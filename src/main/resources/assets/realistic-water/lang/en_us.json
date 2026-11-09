@@ -78,5 +78,11 @@
   "block.realistic-water.realistic_cola": "Realistic Cola",
   "item.realistic-water.realistic_mud_bucket": "Realistic Mud Bucket",
   "item.realistic-water.realistic_milk_bucket": "Realistic Milk Bucket",
-  "item.realistic-water.realistic_cola_bucket": "Realistic Cola Bucket"
+  "item.realistic-water.realistic_cola_bucket": "Realistic Cola Bucket",
+  "block.realistic-water.realistic_honey": "Realistic Liquid Honey",
+  "item.realistic-water.realistic_honey_bucket": "Realistic Liquid Honey Bucket",
+  "block.realistic-water.source_honey": "Liquid Honey Source",
+  "block.realistic-water.realistic_oil": "Realistic Oil",
+  "item.realistic-water.realistic_oil_bucket": "Realistic Oil Bucket",
+  "block.realistic-water.source_oil": "Oil Source"
 }

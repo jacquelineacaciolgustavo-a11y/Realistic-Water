@@ -33,6 +33,25 @@ int countAt(ivec3 c) {
     return inBox(c) ? cellCount[cellIndex(c)] : 0;
 }
 
+// Leite: a espuma so existe junto das bordas (paredes do recipiente ou margem rasa), nunca no meio da superficie.
+bool milkEdge(vec3 x) {
+    for (int dz = -2; dz <= 2; dz++) {
+        for (int dx = -2; dx <= 2; dx++) {
+            if (dx == 0 && dz == 0) {
+                continue;
+            }
+            vec3 o = vec3(float(dx), 0.0, float(dz));
+            if (solidAt(x + o) || solidAt(x + o + vec3(0.0, 1.0, 0.0))) {
+                return true;
+            }
+            if (countAt(ivec3(floor(x + o))) == 0 && solidAt(x + o - vec3(0.0, 1.0, 0.0))) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
 bool waterFilm(vec3 x, inout vec3 v, inout vec3 dx, inout float dryness) {
     ivec3 c = ivec3(floor(x));
     int n27 = 0;
@@ -391,6 +410,9 @@ void boilBubbles(vec3 x, inout vec3 v, float temp, bool heated, inout uint seed)
 void emitWhitewater(uint id, vec3 x, vec3 v) {
     ivec3 c = ivec3(floor(x));
     if (!inBox(c)) {
+        return;
+    }
+    if (isMilk() && !milkEdge(x)) {
         return;
     }
     vec2 pot = potential[cellIndex(c)];

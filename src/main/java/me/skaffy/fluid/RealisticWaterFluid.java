@@ -27,10 +27,13 @@ import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.material.FlowingFluid;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.FluidState;
+import net.minecraft.world.phys.Vec3;
 import org.jspecify.annotations.Nullable;
 
 public abstract class RealisticWaterFluid extends FlowingFluid {
-	/** 0 = agua, 1 = lama, 2 = leite, 3 = coca-cola, 4 = bloco de lama (lama espessa). */
+	private static final Vec3 HONEY_STUCK = new Vec3(0.2, 0.1, 0.2);
+
+	/** 0 = agua, 1 = lama, 2 = leite, 3 = coca-cola, 4 = bloco de lama (lama espessa), 5 = mel liquido, 6 = petroleo. */
 	protected final int kind;
 
 	protected RealisticWaterFluid(int kind) {
@@ -47,6 +50,8 @@ public abstract class RealisticWaterFluid extends FlowingFluid {
 			case 1 -> ModContent.FLOWING_REALISTIC_MUD;
 			case 2 -> ModContent.FLOWING_REALISTIC_MILK;
 			case 3 -> ModContent.FLOWING_REALISTIC_COLA;
+			case 5 -> ModContent.FLOWING_REALISTIC_HONEY;
+			case 6 -> ModContent.FLOWING_REALISTIC_OIL;
 			case 4 -> ModContent.FLOWING_REALISTIC_THICK_MUD;
 			default -> ModContent.FLOWING_REALISTIC_WATER;
 		};
@@ -58,6 +63,8 @@ public abstract class RealisticWaterFluid extends FlowingFluid {
 			case 1 -> ModContent.REALISTIC_MUD;
 			case 2 -> ModContent.REALISTIC_MILK;
 			case 3 -> ModContent.REALISTIC_COLA;
+			case 5 -> ModContent.REALISTIC_HONEY;
+			case 6 -> ModContent.REALISTIC_OIL;
 			case 4 -> ModContent.REALISTIC_THICK_MUD;
 			default -> ModContent.REALISTIC_WATER;
 		};
@@ -69,6 +76,8 @@ public abstract class RealisticWaterFluid extends FlowingFluid {
 			case 1 -> ModContent.REALISTIC_MUD_BUCKET;
 			case 2 -> ModContent.REALISTIC_MILK_BUCKET;
 			case 3 -> ModContent.REALISTIC_COLA_BUCKET;
+			case 5 -> ModContent.REALISTIC_HONEY_BUCKET;
+			case 6 -> ModContent.REALISTIC_OIL_BUCKET;
 			case 4 -> ModContent.REALISTIC_MUD_BUCKET;
 			default -> ModContent.REALISTIC_WATER_BUCKET;
 		};
@@ -79,6 +88,8 @@ public abstract class RealisticWaterFluid extends FlowingFluid {
 			case 1 -> ModContent.REALISTIC_MUD_BLOCK;
 			case 2 -> ModContent.REALISTIC_MILK_BLOCK;
 			case 3 -> ModContent.REALISTIC_COLA_BLOCK;
+			case 5 -> ModContent.REALISTIC_HONEY_BLOCK;
+			case 6 -> ModContent.REALISTIC_OIL_BLOCK;
 			case 4 -> ModContent.REALISTIC_THICK_MUD_BLOCK;
 			default -> ModContent.REALISTIC_WATER_BLOCK;
 		};
@@ -95,6 +106,12 @@ public abstract class RealisticWaterFluid extends FlowingFluid {
 		}
 		if (block == ModContent.REALISTIC_THICK_MUD_BLOCK) {
 			return 4;
+		}
+		if (block == ModContent.REALISTIC_HONEY_BLOCK) {
+			return 5;
+		}
+		if (block == ModContent.REALISTIC_OIL_BLOCK) {
+			return 6;
 		}
 		return block == ModContent.REALISTIC_COLA_BLOCK ? 3 : 0;
 	}
@@ -125,12 +142,26 @@ public abstract class RealisticWaterFluid extends FlowingFluid {
 
 	@Override
 	protected void entityInside(final Level level, final BlockPos pos, final Entity entity, final InsideBlockEffectApplier effectApplier) {
+		if (this.kind == 5) {
+			// Mel liquido: gruda em quem esta dentro. Move bem devagar, nao consegue subir e escorrega pra baixo aos poucos.
+			entity.makeStuckInBlock(level.getBlockState(pos), HONEY_STUCK);
+			Vec3 v = entity.getDeltaMovement();
+			entity.setDeltaMovement(v.x, v.y > 0.0 ? v.y * 0.05 : Math.max(v.y, -0.05), v.z);
+			return;
+		}
+		if (this.kind == 6) {
+			// Petroleo: quem entra pegando fogo acende o liquido; nao apaga o fogo como a agua.
+			if (entity.isOnFire() && level instanceof ServerLevel serverLevel) {
+				OilFire.ignite(serverLevel, pos);
+			}
+			return;
+		}
 		effectApplier.apply(InsideBlockEffectType.EXTINGUISH);
 	}
 
 	@Override
 	public int getSlopeFindDistance(final LevelReader level) {
-		return 4;
+		return this.kind == 5 ? 2 : 4;
 	}
 
 	@Override
@@ -152,7 +183,7 @@ public abstract class RealisticWaterFluid extends FlowingFluid {
 
 	@Override
 	public int getTickDelay(final LevelReader level) {
-		return 5;
+		return this.kind == 5 ? 20 : this.kind == 6 ? 8 : 5;
 	}
 
 	@Override

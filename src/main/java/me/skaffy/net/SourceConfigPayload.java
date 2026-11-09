@@ -58,6 +58,10 @@ public record SourceConfigPayload(int x, int y, int z, int flow, boolean flood, 
 	}
 
 	private static void set(Level level, BlockPos pos, BlockState state, int flow, boolean flood) {
-		level.setBlock(pos, state.setValue(SourceBlock.FLOW, flow).setValue(SourceBlock.FLOOD, flood), Block.UPDATE_CLIENTS);
+		BlockState next = state.setValue(SourceBlock.FLOW, flow).setValue(SourceBlock.FLOOD, flood);
+		if (flood) {
+			next = next.setValue(SourceBlock.ENABLED, true);
+		}
+		level.setBlock(pos, next, Block.UPDATE_CLIENTS);
 	}
 }

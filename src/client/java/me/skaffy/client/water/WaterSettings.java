@@ -22,12 +22,12 @@ public final class WaterSettings {
     public static float maxDt = 1.0F / 40.0F;
     public static int maxStepsPerFrame = 2;
     public static int renderMaxStepsPerFrame = 64;
-    public static int cgIterations = 3;
+    public static int cgIterations = 4;
     public static int mgCoarseSweeps = 12;
     public static int solverBottomCells = 8192;
     public static int solverSmallCells = 24000;
     public static int extrapolationLayers = 4;
-    public static float flipRatio = 0.99F;
+    public static float flipRatio = 0.999F;
     public static float volumeCorrection = 3.5F;
     public static float maxSpeed = 40.0F;
     public static float gravity = 9.81F;
@@ -53,14 +53,14 @@ public final class WaterSettings {
     public static int wwMaxPerParticle = 3;
     public static int wwCellLimit = 30;
 
-    public static float filmFriction = 20.0F;
-    public static float filmDepth = 0.10F;
+    public static float filmFriction = 0.0F;
+    public static float filmDepth = 0.02F;
     public static boolean sheetFill = false;
     public static boolean wallFill = true;
     public static float wallFillReach = 1.0F;
     public static float sheetSmoothing = 2.0F;
-    public static float strandedTime = 1.5F;
-    public static int strandedNeighbors = 12;
+    public static float strandedTime = 2.5F;
+    public static int strandedNeighbors = 8;
 
     public static int surfaceSubdivision = 1;
     public static float surfaceKernel = 3.0F;

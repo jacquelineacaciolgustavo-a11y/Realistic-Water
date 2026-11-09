@@ -29,6 +29,8 @@ public class HotObsidianBlock extends Block {
 
 	private static final VoxelShape[] SHAPES = Block.boxes(MAX_LAYERS, height -> Block.column(16.0, 0.0, height * 2));
 	private static final int TICK_DELAY = 30;
+	/** Ticks entre uma camada e a proxima enquanto a obsidiana cresce. */
+	private static final int GROW_DELAY = 8;
 
 	public HotObsidianBlock(Properties properties) {
 		super(properties);
@@ -59,35 +61,48 @@ public class HotObsidianBlock extends Block {
 
 	@Override
 	protected void onPlace(final BlockState state, final Level level, final BlockPos pos, final BlockState oldState, final boolean movedByPiston) {
-		if (!level.isClientSide() && state.getValue(HEAT) > 0) {
-			level.scheduleTick(pos, this, TICK_DELAY);
+		if (!level.isClientSide() && (state.getValue(HEAT) > 0 || state.getValue(LAYERS) < MAX_LAYERS)) {
+			level.scheduleTick(pos, this, GROW_DELAY);
 		}
 	}
 
+	/** Folhas finas que ficaram paradas (de antes da correcao) voltam a crescer sozinhas. */
+	@Override
+	protected boolean isRandomlyTicking(final BlockState state) {
+		return state.getValue(LAYERS) < MAX_LAYERS;
+	}
+
+	@Override
+	protected void randomTick(final BlockState state, final ServerLevel level, final BlockPos pos, final RandomSource random) {
+		this.tick(state, level, pos, random);
+	}
+
+	/**
+	 * Primeiro cresce ate virar o bloco inteiro (8 camadas), ainda quente e brilhando, SEM depender de ainda ter
+	 * lava e agua encostadas (o contato some assim que a obsidiana nasce). So depois de completa ela esfria
+	 * e vira obsidiana de verdade.
+	 */
 	@Override
 	protected void tick(final BlockState state, final ServerLevel level, final BlockPos pos, final RandomSource random) {
 		int layers = state.getValue(LAYERS);
 		int heat = state.getValue(HEAT);
+		if (layers < MAX_LAYERS) {
+			level.setBlock(pos, state.setValue(LAYERS, layers + 1), Block.UPDATE_ALL);
+			level.scheduleTick(pos, this, GROW_DELAY);
+			return;
+		}
 		if (heat > 0) {
 			if (hasReaction(level, pos)) {
-				if (layers < MAX_LAYERS) {
-					layers++;
-				} else {
-					this.growUp(level, pos);
-				}
+				this.growUp(level, pos);
 			}
 			heat--;
 		}
-		if (layers >= MAX_LAYERS && heat == 0) {
+		if (heat == 0) {
 			level.setBlock(pos, Blocks.OBSIDIAN.defaultBlockState(), Block.UPDATE_ALL);
 			return;
 		}
-		if (layers != state.getValue(LAYERS) || heat != state.getValue(HEAT)) {
-			level.setBlock(pos, state.setValue(LAYERS, layers).setValue(HEAT, heat), Block.UPDATE_ALL);
-		}
-		if (heat > 0) {
-			level.scheduleTick(pos, this, TICK_DELAY);
-		}
+		level.setBlock(pos, state.setValue(HEAT, heat), Block.UPDATE_ALL);
+		level.scheduleTick(pos, this, TICK_DELAY);
 	}
 
 	/** So cresce enquanto lava e agua ainda se tocam aqui ao redor. */

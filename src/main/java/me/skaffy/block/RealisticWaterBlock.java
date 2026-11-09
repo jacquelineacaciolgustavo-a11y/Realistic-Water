@@ -1,6 +1,11 @@
 package me.skaffy.block;
 
 import me.skaffy.ModContent;
+import me.skaffy.fluid.OilFire;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.redstone.Orientation;
 import me.skaffy.ocean.OceanOrigin;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.LivingEntity;
@@ -58,6 +63,39 @@ public class RealisticWaterBlock extends LiquidBlock {
 			return new ItemStack(ModContent.SMALL_REALISTIC_WATER_BUCKET);
 		}
 		return super.pickupBlock(user, level, pos, state);
+	}
+
+	@Override
+	protected void neighborChanged(final BlockState state, final Level level, final BlockPos pos, final Block block, final @Nullable Orientation orientation, final boolean movedByPiston) {
+		super.neighborChanged(state, level, pos, block, orientation, movedByPiston);
+		if (this == ModContent.REALISTIC_OIL_BLOCK && level instanceof ServerLevel serverLevel) {
+			OilFire.checkIgnite(serverLevel, pos);
+		}
+	}
+
+	/** So o petroleo usa tick de bloco: a queima agendada pelo OilFire. */
+	@Override
+	protected void tick(final BlockState state, final ServerLevel level, final BlockPos pos, final RandomSource random) {
+		if (this == ModContent.REALISTIC_OIL_BLOCK) {
+			OilFire.burn(level, pos);
+			return;
+		}
+		super.tick(state, level, pos, random);
+	}
+
+	/** O petroleo confere de vez em quando se tem lava/fogo encostado (a lava da simulacao nao avisa os vizinhos). */
+	@Override
+	protected boolean isRandomlyTicking(final BlockState state) {
+		return this == ModContent.REALISTIC_OIL_BLOCK || super.isRandomlyTicking(state);
+	}
+
+	@Override
+	protected void randomTick(final BlockState state, final ServerLevel level, final BlockPos pos, final RandomSource random) {
+		if (this == ModContent.REALISTIC_OIL_BLOCK) {
+			OilFire.checkIgnite(level, pos);
+			return;
+		}
+		super.randomTick(state, level, pos, random);
 	}
 
 	@Override

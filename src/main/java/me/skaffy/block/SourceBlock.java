@@ -49,7 +49,7 @@ public class SourceBlock extends Block {
         this.registerDefaultState(this.stateDefinition.any()
             .setValue(UP, false).setValue(DOWN, false).setValue(NORTH, false)
             .setValue(SOUTH, false).setValue(EAST, false).setValue(WEST, false)
-            .setValue(FLOW, 5).setValue(FLOOD, false).setValue(ENABLED, false));
+            .setValue(FLOW, 1).setValue(FLOOD, false).setValue(ENABLED, false));
     }
 
     public static BooleanProperty faceProperty(Direction direction) {
@@ -70,6 +70,8 @@ public class SourceBlock extends Block {
             case 3 -> ModContent.REALISTIC_MUD_BLOCK.defaultBlockState();
             case 4 -> ModContent.REALISTIC_MILK_BLOCK.defaultBlockState();
             case 5 -> ModContent.REALISTIC_COLA_BLOCK.defaultBlockState();
+            case 6 -> ModContent.REALISTIC_HONEY_BLOCK.defaultBlockState();
+            case 7 -> ModContent.REALISTIC_OIL_BLOCK.defaultBlockState();
             default -> ModContent.REALISTIC_WATER_BLOCK.defaultBlockState();
         };
     }
@@ -81,6 +83,8 @@ public class SourceBlock extends Block {
             case 3 -> ModContent.REALISTIC_MUD_BLOCK;
             case 4 -> ModContent.REALISTIC_MILK_BLOCK;
             case 5 -> ModContent.REALISTIC_COLA_BLOCK;
+            case 6 -> ModContent.REALISTIC_HONEY_BLOCK;
+            case 7 -> ModContent.REALISTIC_OIL_BLOCK;
             default -> ModContent.REALISTIC_WATER_BLOCK;
         };
     }
@@ -106,11 +110,17 @@ public class SourceBlock extends Block {
             return;
         }
 
-        // Modo alagamento: o espirro e simulado como jato de fluido no cliente (WaterWorld.writeSourceJets),
-        // entao o servidor nao coloca blocos de agua aqui. So o modo normal enche as saidas abertas.
-        if (flow > 0 && state.getValue(ENABLED) && !flood) {
+        // O jato (bomba) do cliente so empurra liquido que ja existe: o servidor mantem as saidas cheias,
+        // inclusive no modo alagamento (antes ele nao enchia nada e o jato ficava sem agua).
+        if (flow > 0 && (state.getValue(ENABLED) || flood)) {
+            boolean anyOpen = false;
             for (Direction direction : Direction.values()) {
-                if (state.getValue(faceProperty(direction))) {
+                anyOpen |= state.getValue(faceProperty(direction));
+            }
+            for (Direction direction : Direction.values()) {
+                // Alagamento sem saida aberta: espirra por cima e pelos 4 lados (nunca pra baixo).
+                boolean open = anyOpen ? state.getValue(faceProperty(direction)) : flood && direction != Direction.DOWN;
+                if (open) {
                     this.fill(level, pos.relative(direction));
                 }
             }

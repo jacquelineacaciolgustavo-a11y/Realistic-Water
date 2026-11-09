@@ -56,5 +56,11 @@
   "block.realistic-water.source.face.west": "do oeste",
   "item.realistic-water.realistic_honey_ball": "Bola de Mel Realista",
   "item.realistic-water.realistic_block": "Bloco Realista",
-  "item.realistic-water.realistic_block.of": "%s Realista"
+  "item.realistic-water.realistic_block.of": "%s Realista",
+  "block.realistic-water.realistic_honey": "Mel Líquido Realista",
+  "item.realistic-water.realistic_honey_bucket": "Balde de Mel Líquido Realista",
+  "block.realistic-water.source_honey": "Fonte de Mel Líquido",
+  "block.realistic-water.realistic_oil": "Petróleo Realista",
+  "item.realistic-water.realistic_oil_bucket": "Balde de Petróleo Realista",
+  "block.realistic-water.source_oil": "Fonte de Petróleo"
 }

@@ -187,6 +187,22 @@ public class RealisticWaterClient implements ClientModInitializer {
         );
         FluidRenderingRegistry.register(ModContent.REALISTIC_COLA, ModContent.FLOWING_REALISTIC_COLA, colaModel, invisible);
 
+        FluidModel.Unbaked honeyModel = new FluidModel.Unbaked(
+            new Material(Identifier.withDefaultNamespace("block/water_still")),
+            new Material(Identifier.withDefaultNamespace("block/water_flow")),
+            new Material(Identifier.withDefaultNamespace("block/water_overlay")),
+            BlockTintSources.constant(0xF0E8A317)
+        );
+        FluidRenderingRegistry.register(ModContent.REALISTIC_HONEY, ModContent.FLOWING_REALISTIC_HONEY, honeyModel, invisible);
+
+        FluidModel.Unbaked oilModel = new FluidModel.Unbaked(
+            new Material(Identifier.withDefaultNamespace("block/water_still")),
+            new Material(Identifier.withDefaultNamespace("block/water_flow")),
+            new Material(Identifier.withDefaultNamespace("block/water_overlay")),
+            BlockTintSources.constant(0xF0121008)
+        );
+        FluidRenderingRegistry.register(ModContent.REALISTIC_OIL, ModContent.FLOWING_REALISTIC_OIL, oilModel, invisible);
+
         ParticleProviderRegistry.getInstance().register(ModContent.STEAM, SteamParticle.Provider::new);
     }
 }

@@ -78,6 +78,18 @@ void liquidTint(int t) {
         gScatter = vec3(0.96, 0.96, 0.95);
         gDensity = 9.0;
         gMinPath = 4.0;
+    } else if (t == 5) {
+        // Mel liquido: ambar translucido e brilhante.
+        gAbsorb = vec3(0.9, 2.4, 6.5);
+        gScatter = vec3(0.90, 0.50, 0.08);
+        gDensity = 3.5;
+        gMinPath = 1.5;
+    } else if (t == 6) {
+        // Petroleo: preto quase opaco com um fundo esverdeado bem escuro.
+        gAbsorb = vec3(6.0, 6.5, 7.0);
+        gScatter = vec3(0.020, 0.022, 0.016);
+        gDensity = 9.0;
+        gMinPath = 3.0;
     } else {
         // Coca-cola: marrom escuro opaco; escurece conforme acumula (ver shadeAboveWater).
         gAbsorb = vec3(1.6, 2.6, 3.8);
@@ -275,7 +287,7 @@ vec3 shadeAboveWater(vec2 uv, vec3 n, float fd, float sceneDist, float ambient, 
     vec3 lightColor = vanillaLight(bs);
     vec3 scattered = gScatter * lightColor * (1.0 - exp(-gDensity * path));
     vec3 water = transmitted + scattered;
-    if (gTint > 2.5) {
+    if (gTint > 2.5 && gTint < 3.5) {
         water *= mix(1.0, 0.15, 1.0 - exp(-pathReal * 0.9));
     }
     if (G.compat.w > 0.0) {
@@ -458,11 +470,11 @@ vec3 shadePixel(vec2 uv) {
     float whitecap = seaSurface ? floor(matSample.a - 2.0 + 0.01) / 7.0 : 0.0;
     seaLook(underwater || !hasFluid ? vec3(0.0) : (G.invView * vec4(viewPosAt(uv, fd), 1.0)).xyz);
     float tintId = floor(matId / 0.05 + 0.5);
-    if (hasFluid && matTagged && !surfaceOnly && tintId > 0.5 && tintId < 3.5) {
+    if (hasFluid && matTagged && !surfaceOnly && tintId > 0.5 && tintId < 6.5) {
         liquidTint(int(tintId));
     }
     int cameraTint = int(G.matD.w + 0.5);
-    if (underwater && !lavaPass && cameraTint > 0 && cameraTint < 4) {
+    if (underwater && !lavaPass && cameraTint > 0 && cameraTint < 7) {
         liquidTint(cameraTint);
     }
 

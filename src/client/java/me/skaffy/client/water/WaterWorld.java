@@ -2304,21 +2304,31 @@ public final class WaterWorld {
 		putInts(b, o + 32, r.fluidCapacity, r.wwCapacity, entityCount, this.frameCounter);
 		int sourceCount = sand ? 0 : this.writeSources(r, b, o + 2112);
 		boolean whitewater = r.ocean != null ? WaterSettings.oceanWhitewater : WaterSettings.whitewater;
-		putInts(b, o + 48, r.material.usesWhitewater() && (whitewater || (r.tint == 2 || r.tint == 3) && r.ocean == null) ? 1 : 0, sourceCount, !sand && this.localPlayerFirst ? 1 : 0,
+		boolean honey = r.material == Material.WATER && r.ocean == null && r.tint == 5;
+		boolean oil = r.material == Material.WATER && r.ocean == null && r.tint == 6;
+		putInts(b, o + 48, r.material.usesWhitewater() && !honey && (whitewater || (r.tint == 2 || r.tint == 3) && r.ocean == null) ? 1 : 0, sourceCount, !sand && this.localPlayerFirst ? 1 : 0,
 			WaterSettings.wwCellLimit);
 		boolean mud = r.material == Material.WATER && r.ocean == null && (r.tint == 1 || r.tint == 4);
-		boolean viscous = slime || mud;
-		float gravityScale = mud ? 0.4F : 1.0F;
+		boolean viscous = slime || mud || honey;
+		boolean mudBlock = mud && r.tint == 4;
+		float gravityScale = mudBlock ? 0.6F : mud ? 0.4F : honey ? 0.5F : 1.0F;
 		putFloats(b, o + 64, 0.0F, -WaterSettings.gravity * gravityScale * res, 0.0F, dt);
-		float flipRatio = r.ocean != null ? WaterSettings.oceanFlipRatio : lava ? WaterSettings.lavaFlipRatio : slime || mud ? WaterSettings.slimeFlipRatio
+		float flipRatio = r.ocean != null ? WaterSettings.oceanFlipRatio : lava ? WaterSettings.lavaFlipRatio : slime || mud || honey ? WaterSettings.slimeFlipRatio
 			: WaterSettings.flipRatio;
+		if (mudBlock) {
+			flipRatio = MUD_BLOCK_FLIP_RATIO;
+		}
+		if (!viscous && !oil && !lava && !sand && !leaves && r.ocean == null && r.material == Material.WATER && !r.floodViscous) {
+			// Agua, leite e coca: o minimo de viscosidade (quase sem amortecimento nas particulas).
+			flipRatio = Math.max(flipRatio, LOW_VISC_FLIP_RATIO);
+		}
 		float flip = (float) Math.pow(flipRatio, dt * 60.0F);
 		putFloats(b, o + 80, flip, PARTICLES_PER_CELL, viscous ? WaterSettings.slimeVolumeCorrection : WaterSettings.volumeCorrection, 0.0F);
-		float maxSpeed = (lava ? WaterSettings.lavaMaxSpeed : slime ? WaterSettings.slimeMaxSpeed : leaves ? WaterSettings.leafMaxSpeed : mud ? WaterSettings.maxSpeed * 0.5F : WaterSettings.maxSpeed) * res;
+		float maxSpeed = (lava ? WaterSettings.lavaMaxSpeed : slime ? WaterSettings.slimeMaxSpeed : leaves ? WaterSettings.leafMaxSpeed : mudBlock ? WaterSettings.maxSpeed * 0.2F : mud ? WaterSettings.maxSpeed * 0.5F : honey ? WaterSettings.maxSpeed * 0.25F : WaterSettings.maxSpeed) * res;
 		putFloats(b, o + 96, maxSpeed, h, this.simTime, 0.0F);
 		float airBoost = r.material == Material.WATER && r.ocean == null && r.tint == 3 ? 2.5F : 1.0F;
 		float crestBoost = r.material == Material.WATER && r.ocean == null && r.tint == 2 ? 2.0F : 1.0F;
-		float softFoam = r.material == Material.WATER && r.ocean == null && (r.tint == 2 || r.tint == 3) ? MILK_COLA_FOAM_SCALE : 1.0F;
+		float softFoam = r.material == Material.WATER && r.ocean == null && (r.tint == 2 || r.tint == 3 || r.tint == 6) ? MILK_COLA_FOAM_SCALE : 1.0F;
 		putFloats(b, o + 112, WaterSettings.wwTrappedAirRate * airBoost * softFoam, WaterSettings.wwWaveCrestRate * crestBoost * softFoam, WaterSettings.wwEnergyMin, WaterSettings.wwEnergyMax);
 		putFloats(b, o + 128, WaterSettings.wwTrappedAirMin, WaterSettings.wwTrappedAirMax, WaterSettings.wwWaveCrestMin, WaterSettings.wwWaveCrestMax);
 		putFloats(b, o + 144, WaterSettings.wwFoamLifeMin, WaterSettings.wwFoamLifeMax, WaterSettings.wwBubbleBuoyancy, WaterSettings.wwBubbleDrag);
@@ -2326,6 +2336,11 @@ public final class WaterWorld {
 
 		boolean sea = r.ocean != null;
 		float glint = this.writeLook(b, o, camera, sky, width, height, lava, slime, sand, leaves, h, sea);
+		if (mud || honey) {
+			// Lama/mel: particulas maiores e superficie bem suavizada = quinas e bordas arredondadas.
+			putFloats(b, o + 512, WaterSettings.particleRadius * h * (mudBlock ? MUD_BLOCK_ROUNDING : MUD_ROUNDING), WaterSettings.thicknessScale,
+				WaterSettings.refraction, Math.max(WaterSettings.slimeSurfaceSmoothing, 0.95F));
+		}
 		Vec3 cam = camera.pos;
 		putFloats(b, o + 432, (float) (r.ox - cam.x), (float) (r.oy - cam.y), (float) (r.oz - cam.z), h);
 		putFloats(b, o + 3136, (float) (cam.x - r.ox) * res, (float) (cam.y - r.oy) * res, (float) (cam.z - r.oz) * res, res);
@@ -2369,16 +2384,25 @@ public final class WaterWorld {
 			putFloats(b, o + 3872, WaterSettings.sandWallFriction, 1.0F / PARTICLES_PER_CELL, impactViscosity, WaterSettings.sandImpactRate);
 		} else {
 			float filmFriction = lava ? WaterSettings.lavaFilmFriction : viscous ? WaterSettings.slimeFilmFriction
-				: r.floodViscous ? FLOOD_FILM_FRICTION : WaterSettings.filmFriction;
+				: r.floodViscous ? FLOOD_FILM_FRICTION : oil ? OIL_FILM_FRICTION : 0.0F;
 			float strandedTime = lava ? WaterSettings.lavaStrandedTime : viscous ? WaterSettings.slimeStrandedTime : WaterSettings.strandedTime;
 			int strandedNeighbors = lava ? WaterSettings.lavaStrandedNeighbors : viscous ? WaterSettings.slimeStrandedNeighbors : WaterSettings.strandedNeighbors;
 			float filmDepth = (lava ? WaterSettings.lavaFilmDepth : viscous ? WaterSettings.slimeFilmDepth
-			: r.floodViscous ? FLOOD_FILM_DEPTH : WaterSettings.filmDepth) * res;
-			float adhesion = viscous ? WaterSettings.slimeAdhesion * (mud ? 0.6F : 1.0F) : 0.0F;
+			: r.floodViscous ? FLOOD_FILM_DEPTH : oil ? OIL_FILM_DEPTH : LOW_VISC_FILM_DEPTH) * res;
+			float adhesion = viscous ? WaterSettings.slimeAdhesion * (mudBlock ? 1.0F : mud ? 0.6F : honey ? 1.3F : 1.0F) : 0.0F;
 			float entityStick = slime ? Mth.clamp(WaterSettings.slimeEntityStick, 0.0F, 1.0F) : 0.0F;
 			putFloats(b, o + 3840, r.material.shaderId() + (r.material == Material.WATER && r.ocean == null ? lookTint(r.tint) * 0.05F : 0.0F), adhesion, entityStick, 1.0F);
 			putFloats(b, o + 3856, filmFriction, strandedTime, strandedNeighbors, filmDepth);
-			if (viscous) {
+			if (mudBlock) {
+				// Bloco de lama: congela quase na hora e so acorda com empurrao forte, mantendo o formato de cubo.
+				putFloats(b, o + 3872, MUD_BLOCK_REST_SPEED * res, MUD_BLOCK_REST_TIME, MUD_BLOCK_WAKE_SPEED * res, 0.0F);
+			} else if (honey) {
+				// Mel liquido: quase nunca congela de vez, escorre bem devagar e gruda nas paredes.
+				putFloats(b, o + 3872, HONEY_REST_SPEED * res, HONEY_REST_TIME, HONEY_WAKE_SPEED * res, 0.0F);
+			} else if (mud) {
+				// Lama do balde: forma um monte arredondado que se segura (nao espalha feito agua).
+				putFloats(b, o + 3872, MUD_REST_SPEED * res, MUD_REST_TIME, MUD_WAKE_SPEED * res, 0.0F);
+			} else if (viscous) {
 				putFloats(b, o + 3872, WaterSettings.slimeRestSpeed * res, WaterSettings.slimeRestTime, WaterSettings.slimeWakeSpeed * res, 0.0F);
 			} else {
 				putFloats(b, o + 3872, 0.0F, 0.0F, 0.0F, 0.0F);
@@ -2711,13 +2735,20 @@ public final class WaterWorld {
 				continue;
 			}
 			Material kind = source.kind() == 1 ? Material.LAVA : source.kind() == 2 ? Material.SLIME : Material.WATER;
-			int sourceTint = source.kind() >= 3 ? source.kind() - 2 : 0;
+			int sourceTint = switch (source.kind()) {
+				case 3 -> 1;
+				case 4 -> 2;
+				case 5 -> 3;
+				case 6 -> 5;
+				case 7 -> 6;
+				default -> 0;
+			};
 			if (kind != r.material || sourceTint != r.tint || !r.windowContains(p, 2)) {
 				continue;
 			}
 			boolean flood = state.getValue(SourceBlock.FLOOD);
 			int flow = flood ? 10 : state.getValue(SourceBlock.FLOW);
-			if (flow <= 0 || !state.getValue(SourceBlock.ENABLED)) {
+			if (flow <= 0 || !(state.getValue(SourceBlock.ENABLED) || flood)) {
 				continue;
 			}
 			int limit = flood ? MAX_FLOOD_JETS : MAX_JETS;
@@ -2739,12 +2770,13 @@ public final class WaterWorld {
 				}
 				Vec3 dir = new Vec3(d.getStepX(), d.getStepY(), d.getStepZ());
 				Vec3 intake = Vec3.atCenterOf(p).add(dir);
-				Vec3 jump = dir.scale(1.0 + flow * 0.25);
-				float rate = 4.0F * flow / 10.0F;
-				float speed = (2.0F + flow * 1.6F) * res;
+				Vec3 jump = dir.scale(1.0 + flow * 0.3);
+				// Vazao 1 = fio fraco; cada ponto a mais aumenta a quantidade E a forca do jato.
+				float rate = (0.5F + flow * 0.7F);
+				float speed = (1.5F + flow * 2.0F) * res;
 				if (flood) {
 					if (d.getAxis().isHorizontal()) {
-						jump = new Vec3(dir.x, 1.2, dir.z).scale(1.0 + flow * 0.25);
+						jump = new Vec3(dir.x, 1.2, dir.z).scale(1.0 + flow * 0.3);
 					} else {
 						jump = jump.scale(1.3);
 					}
@@ -2774,8 +2806,28 @@ public final class WaterWorld {
 	/** Grude da agua no chao so no modo alagamento (a agua normal escorre bem mais solta). */
 	/** Leite e coca mantem a quantidade de espuma antiga (so a agua ganhou mais espuma). */
 	private static final float MILK_COLA_FOAM_SCALE = 20.0F / 45.0F;
-	private static final float FLOOD_FILM_FRICTION = 120.0F;
-	private static final float FLOOD_FILM_DEPTH = 0.20F;
+	/** Bloco de lama (tipo 4): quase rigido, com as pontas arredondadas. Velocidades em blocos/s, tempos em s. */
+	private static final float MUD_BLOCK_REST_SPEED = 3.0F;
+	private static final float MUD_BLOCK_REST_TIME = 0.02F;
+	private static final float MUD_BLOCK_WAKE_SPEED = 5.0F;
+	private static final float MUD_BLOCK_FLIP_RATIO = 0.80F;
+	private static final float MUD_BLOCK_ROUNDING = 1.25F;
+	/** Lama do balde (tipo 1): monte que se segura, sem formato de bloco. */
+	private static final float MUD_REST_SPEED = 1.6F;
+	private static final float MUD_REST_TIME = 0.06F;
+	private static final float MUD_WAKE_SPEED = 3.0F;
+	private static final float MUD_ROUNDING = 1.15F;
+	/** Agua/leite/coca: sem atrito de pelicula e flip quase puro = o liquido mais solto possivel. */
+	private static final float LOW_VISC_FLIP_RATIO = 0.999F;
+	private static final float LOW_VISC_FILM_DEPTH = 0.02F;
+	/** Mel liquido (tipo 5): muito espesso, escorre devagar. Petroleo (tipo 6): um pouco mais grosso que a agua. */
+	private static final float HONEY_REST_SPEED = 0.25F;
+	private static final float HONEY_REST_TIME = 0.35F;
+	private static final float HONEY_WAKE_SPEED = 1.0F;
+	private static final float OIL_FILM_FRICTION = 3.0F;
+	private static final float OIL_FILM_DEPTH = 0.08F;
+	private static final float FLOOD_FILM_FRICTION = 12.0F;
+	private static final float FLOOD_FILM_DEPTH = 0.10F;
 
 	private boolean paddleNear(ClientLevel level, WaterRegion r) {
 		if (!r.hasWindow || r.material != Material.WATER) {

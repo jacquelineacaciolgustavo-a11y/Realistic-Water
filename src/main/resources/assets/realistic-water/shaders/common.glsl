@@ -104,7 +104,11 @@ bool isSlime() {
 }
 
 bool isMud() {
-    return G.matA.x > 0.02 && G.matA.x < 0.08;
+    return (G.matA.x > 0.02 && G.matA.x < 0.08) || abs(G.matA.x - 0.25) < 0.02;
+}
+
+bool isMilk() {
+    return abs(G.matA.x - 0.10) < 0.02;
 }
 
 bool isViscous() {

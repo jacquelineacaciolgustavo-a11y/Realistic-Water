@@ -139,6 +139,28 @@ public final class ModContent {
     public static final Item REALISTIC_MILK_BUCKET = Registry.register(BuiltInRegistries.ITEM, REALISTIC_MILK_BUCKET_KEY, new FiniteBucketItem(
         REALISTIC_MILK, amount -> ModContent.REALISTIC_MILK_BLOCK.defaultBlockState(), new Item.Properties().craftRemainder(Items.BUCKET).stacksTo(1).setId(REALISTIC_MILK_BUCKET_KEY)));
 
+    public static final FlowingFluid FLOWING_REALISTIC_HONEY = Registry.register(
+        BuiltInRegistries.FLUID, RealisticWater.id("flowing_realistic_honey"), new RealisticWaterFluid.Flowing(5));
+    public static final FlowingFluid REALISTIC_HONEY = Registry.register(
+        BuiltInRegistries.FLUID, RealisticWater.id("realistic_honey"), new RealisticWaterFluid.Source(5));
+    public static final ResourceKey<Block> REALISTIC_HONEY_BLOCK_KEY = ResourceKey.create(Registries.BLOCK, RealisticWater.id("realistic_honey"));
+    public static final Block REALISTIC_HONEY_BLOCK = Registry.register(BuiltInRegistries.BLOCK, REALISTIC_HONEY_BLOCK_KEY, new RealisticWaterBlock(
+        REALISTIC_HONEY, BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_ORANGE).replaceable().noCollision().strength(100.0F).pushReaction(PushReaction.POPPED).noLootTable().liquid().sound(SoundType.EMPTY).setId(REALISTIC_HONEY_BLOCK_KEY)));
+    public static final ResourceKey<Item> REALISTIC_HONEY_BUCKET_KEY = ResourceKey.create(Registries.ITEM, RealisticWater.id("realistic_honey_bucket"));
+    public static final Item REALISTIC_HONEY_BUCKET = Registry.register(BuiltInRegistries.ITEM, REALISTIC_HONEY_BUCKET_KEY, new FiniteBucketItem(
+        REALISTIC_HONEY, amount -> ModContent.REALISTIC_HONEY_BLOCK.defaultBlockState(), new Item.Properties().craftRemainder(Items.BUCKET).stacksTo(1).setId(REALISTIC_HONEY_BUCKET_KEY)));
+
+    public static final FlowingFluid FLOWING_REALISTIC_OIL = Registry.register(
+        BuiltInRegistries.FLUID, RealisticWater.id("flowing_realistic_oil"), new RealisticWaterFluid.Flowing(6));
+    public static final FlowingFluid REALISTIC_OIL = Registry.register(
+        BuiltInRegistries.FLUID, RealisticWater.id("realistic_oil"), new RealisticWaterFluid.Source(6));
+    public static final ResourceKey<Block> REALISTIC_OIL_BLOCK_KEY = ResourceKey.create(Registries.BLOCK, RealisticWater.id("realistic_oil"));
+    public static final Block REALISTIC_OIL_BLOCK = Registry.register(BuiltInRegistries.BLOCK, REALISTIC_OIL_BLOCK_KEY, new RealisticWaterBlock(
+        REALISTIC_OIL, BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_BLACK).replaceable().noCollision().strength(100.0F).pushReaction(PushReaction.POPPED).noLootTable().liquid().sound(SoundType.EMPTY).setId(REALISTIC_OIL_BLOCK_KEY)));
+    public static final ResourceKey<Item> REALISTIC_OIL_BUCKET_KEY = ResourceKey.create(Registries.ITEM, RealisticWater.id("realistic_oil_bucket"));
+    public static final Item REALISTIC_OIL_BUCKET = Registry.register(BuiltInRegistries.ITEM, REALISTIC_OIL_BUCKET_KEY, new FiniteBucketItem(
+        REALISTIC_OIL, amount -> ModContent.REALISTIC_OIL_BLOCK.defaultBlockState(), new Item.Properties().craftRemainder(Items.BUCKET).stacksTo(1).setId(REALISTIC_OIL_BUCKET_KEY)));
+
     public static final FlowingFluid FLOWING_REALISTIC_COLA = Registry.register(
         BuiltInRegistries.FLUID, RealisticWater.id("flowing_realistic_cola"), new RealisticWaterFluid.Flowing(3));
     public static final FlowingFluid REALISTIC_COLA = Registry.register(
@@ -179,6 +201,16 @@ public final class ModContent {
     public static final Block SOURCE_COLA = Registry.register(BuiltInRegistries.BLOCK, SOURCE_COLA_KEY, new SourceBlock(5, BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_BLACK).instrument(NoteBlockInstrument.BASEDRUM).strength(1.5F, 6.0F).sound(SoundType.METAL).setId(SOURCE_COLA_KEY)));
     public static final ResourceKey<Item> SOURCE_COLA_ITEM_KEY = ResourceKey.create(Registries.ITEM, RealisticWater.id("source_cola"));
     public static final Item SOURCE_COLA_ITEM = registerBlockItem(SOURCE_COLA_ITEM_KEY, SOURCE_COLA);
+
+    public static final ResourceKey<Block> SOURCE_HONEY_KEY = ResourceKey.create(Registries.BLOCK, RealisticWater.id("source_honey"));
+    public static final Block SOURCE_HONEY = Registry.register(BuiltInRegistries.BLOCK, SOURCE_HONEY_KEY, new SourceBlock(6, BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_ORANGE).instrument(NoteBlockInstrument.BASEDRUM).strength(1.5F, 6.0F).sound(SoundType.METAL).setId(SOURCE_HONEY_KEY)));
+    public static final ResourceKey<Item> SOURCE_HONEY_ITEM_KEY = ResourceKey.create(Registries.ITEM, RealisticWater.id("source_honey"));
+    public static final Item SOURCE_HONEY_ITEM = registerBlockItem(SOURCE_HONEY_ITEM_KEY, SOURCE_HONEY);
+
+    public static final ResourceKey<Block> SOURCE_OIL_KEY = ResourceKey.create(Registries.BLOCK, RealisticWater.id("source_oil"));
+    public static final Block SOURCE_OIL = Registry.register(BuiltInRegistries.BLOCK, SOURCE_OIL_KEY, new SourceBlock(7, BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_BLACK).instrument(NoteBlockInstrument.BASEDRUM).strength(1.5F, 6.0F).sound(SoundType.METAL).setId(SOURCE_OIL_KEY)));
+    public static final ResourceKey<Item> SOURCE_OIL_ITEM_KEY = ResourceKey.create(Registries.ITEM, RealisticWater.id("source_oil"));
+    public static final Item SOURCE_OIL_ITEM = registerBlockItem(SOURCE_OIL_ITEM_KEY, SOURCE_OIL);
 
     public static final ResourceKey<Block> HOT_OBSIDIAN_KEY = ResourceKey.create(Registries.BLOCK, RealisticWater.id("hot_obsidian"));
     public static final Block HOT_OBSIDIAN = Registry.register(BuiltInRegistries.BLOCK, HOT_OBSIDIAN_KEY, new HotObsidianBlock(BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_BLACK).instrument(NoteBlockInstrument.BASEDRUM).strength(50.0F, 1200.0F).sound(SoundType.STONE).noOcclusion().lightLevel(state -> state.getValue(HotObsidianBlock.HEAT) > 0 ? 9 : 0).setId(HOT_OBSIDIAN_KEY)));
@@ -272,6 +304,8 @@ public final class ModContent {
             output.accept(REALISTIC_MUD_CUBE);
             output.accept(REALISTIC_MILK_BUCKET);
             output.accept(REALISTIC_COLA_BUCKET);
+            output.accept(REALISTIC_HONEY_BUCKET);
+            output.accept(REALISTIC_OIL_BUCKET);
 
             output.accept(SOURCE_WATER_ITEM);
             output.accept(SOURCE_LAVA_ITEM);
@@ -279,6 +313,8 @@ public final class ModContent {
             output.accept(SOURCE_MUD_ITEM);
             output.accept(SOURCE_MILK_ITEM);
             output.accept(SOURCE_COLA_ITEM);
+            output.accept(SOURCE_HONEY_ITEM);
+            output.accept(SOURCE_OIL_ITEM);
 
             output.accept(REALISTIC_SNOWBALL);
             output.accept(REALISTIC_SLIME_BALL);

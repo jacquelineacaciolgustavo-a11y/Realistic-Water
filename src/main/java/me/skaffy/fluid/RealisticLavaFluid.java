@@ -59,6 +59,12 @@ public abstract class RealisticLavaFluid extends FlowingFluid {
 
 	@Override
 	public void randomTick(final ServerLevel level, final BlockPos pos, final FluidState fluidState, final RandomSource random) {
+		for (Direction direction : Direction.values()) {
+			BlockPos oilPos = pos.relative(direction);
+			if (OilFire.isOil(level.getBlockState(oilPos))) {
+				OilFire.ignite(level, oilPos);
+			}
+		}
 		if (!ModSettings.lavaIgniteFlammables || !level.canSpreadFireAround(pos)) {
 			return;
 		}
